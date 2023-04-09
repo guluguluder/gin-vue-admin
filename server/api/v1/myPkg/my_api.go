@@ -18,8 +18,20 @@ func (m *MyApi) GetStudentsList(c *gin.Context) {
 		return
 	}
 	Id := utils.GetUserID(c)
-	myApiService.GetStudentsListResp(reqInfo, Id)
-	response.Ok(c)
+	lists, total, err := myApiService.GetStudentsListResp(reqInfo, Id)
+	if err != nil {
+		return
+	} else if total == 0 {
+		response.OkWithMessage("there is no data", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     lists,
+			Total:    total,
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+		}, "ok", c)
+	}
 }
 
 // 根据条件获取毕业生信息列表

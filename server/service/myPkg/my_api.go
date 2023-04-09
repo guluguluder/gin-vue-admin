@@ -10,10 +10,29 @@ import (
 type MyApiService struct {
 }
 
-func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint) {
+//获取毕业生信息列表
+func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint) (list []response.StudentsList, total int64, err error) {
 
-	fmt.Println("hello World")
+	// TODO:身份权限校验
+
+	limit := reqInfo.PageSize
+	offset := reqInfo.PageSize * (reqInfo.Page - 1)
+
+	totalSQL := "select count(*) from( select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi left join sys_users su on su.id = ssi.sys_user_id left join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num order by ssi.stu_num) t "
+	if err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error; err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+
+	sql := "select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi left join sys_users su on su.id = ssi.sys_user_id left join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num order by ssi.stu_num limit ? ,?"
+	if err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error; err != nil {
+		return list, total, err
+	}
+	return list, total, nil
 }
+
 func (m *MyApiService) GetStudentsListByConditionsResp() {
 	fmt.Println("hello World")
 }
@@ -51,6 +70,7 @@ func (m *MyApiService) GetEmploymentInfosListResp(reqInfo request.PageInfo, sysI
 	}
 	return list, total, nil
 }
+
 func (m *MyApiService) GetEmploymentInfosListByConditionsResp() {
 	fmt.Println("hello World")
 }
