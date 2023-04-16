@@ -10,3 +10,12 @@ type StudentsList struct {
 	Email           string `json:"email"`
 	Employed        string `json:"employed"`
 }
+
+type StudentDetails struct {
+	StudentName string `json:"studentName"`
+	StudentNum  string `json:"studentNum"`
+	CompanyName string `json:"companyName"`
+	JobCity     string `json:"jobCity"`
+	JobTitle    string `json:"jobTitle"`  // 工作职位
+	JobSalary   string `json:"jobSalary"` // 工作薪资
+}

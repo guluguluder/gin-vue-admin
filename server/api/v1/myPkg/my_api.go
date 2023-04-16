@@ -3,6 +3,7 @@ package myPkg
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
+	r "github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,7 @@ func (m *MyApi) GetStudentsList(c *gin.Context) {
 	Id := utils.GetUserID(c)
 	lists, total, err := myApiService.GetStudentsListResp(reqInfo, Id)
 	if err != nil {
+		response.FailWithMessage(err.Error(), c)
 		return
 	} else if total == 0 {
 		response.OkWithMessage("there is no data", c)
@@ -36,19 +38,55 @@ func (m *MyApi) GetStudentsList(c *gin.Context) {
 
 // 根据条件获取毕业生信息列表
 func (m *MyApi) GetStudentsListByConditions(c *gin.Context) {
-	myApiService.GetStudentsListByConditionsResp()
-	response.Ok(c)
+	var reqInfo r.GetStudentsByConditions
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	lists, total, err := myApiService.GetStudentsListByConditionsResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else if total == 0 {
+		response.OkWithMessage("there is no data", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     lists,
+			Total:    total,
+			Page:     reqInfo.PageInfo.Page,
+			PageSize: reqInfo.PageInfo.PageSize,
+		}, "ok", c)
+	}
 }
 
 // 查看毕业生就业详情
 func (m *MyApi) GetStudentsDetails(c *gin.Context) {
-	myApiService.GetStudentsDetailsResp()
-	response.Ok(c)
+	var reqInfo r.GetStudentsDetails
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	list, err := myApiService.GetStudentsDetailsResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(list, "ok", c)
 }
 
 // 编辑毕业生信息
 func (m *MyApi) UpdStudentsInfos(c *gin.Context) {
-	myApiService.UpdStudentsInfosResp()
+
+	var reqInfo r.UpdStudentsInfos
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	myApiService.UpdStudentsInfosResp(reqInfo, Id)
 	response.Ok(c)
 }
 

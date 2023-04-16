@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
+	r "github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/response"
 )
 
@@ -18,7 +19,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint)
 	limit := reqInfo.PageSize
 	offset := reqInfo.PageSize * (reqInfo.Page - 1)
 
-	totalSQL := "select count(*) from( select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi left join sys_users su on su.id = ssi.sys_user_id left join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num order by ssi.stu_num) t "
+	totalSQL := "select count(*) from( select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi left join sys_users su on su.id = ssi.sys_user_id left join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where ssi.deleted_at is null order by ssi.stu_num) t "
 	if err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error; err != nil {
 		return list, total, err
 	}
@@ -26,22 +27,63 @@ func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint)
 		return list, total, nil
 	}
 
-	sql := "select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi left join sys_users su on su.id = ssi.sys_user_id left join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num order by ssi.stu_num limit ? ,?"
+	sql := "select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi left join sys_users su on su.id = ssi.sys_user_id left join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where ssi.deleted_at is null order by ssi.stu_num limit ? ,?"
 	if err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error; err != nil {
 		return list, total, err
 	}
 	return list, total, nil
 }
 
-func (m *MyApiService) GetStudentsListByConditionsResp() {
+// 根据条件获取毕业生信息列表
+func (m *MyApiService) GetStudentsListByConditionsResp(reqInfo r.GetStudentsByConditions, sysId uint) (list []response.StudentsList, total int64, err error) {
+
+	limit := reqInfo.PageInfo.PageSize
+	offset := reqInfo.PageInfo.PageSize * (reqInfo.PageInfo.Page - 1)
+	whereStr := ""
+	if reqInfo.ClassNumber != "" {
+		whereStr = fmt.Sprintf("'%v' ssi.stu_class_num = '%v' and ", whereStr, reqInfo.ClassNumber)
+	} else if reqInfo.StuNumber != "" {
+		whereStr = fmt.Sprintf("'%v' ssi.stu_num = '%v' and ", whereStr, reqInfo.StuNumber)
+	} else if reqInfo.IsEmployed != "" {
+		whereStr = fmt.Sprintf(" '%v' ssi.employed = '%v' and ", whereStr, reqInfo.IsEmployed)
+	} else if reqInfo.IsEmployed != "" {
+		whereStr = fmt.Sprintf("'%v' scci.college_name = '%v' and ", whereStr, reqInfo.CollegeName)
+	}
+
+	totalSQL := " select count(*) from sys_stu_infos ssi inner join sys_users su on su.id = ssi.sys_user_id inner join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where " + whereStr + " ssi.deleted_at is null  order by ssi.stu_num"
+	if err = global.GVA_DB.Raw(totalSQL).Error; err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+	sql := "select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi inner join sys_users su on su.id = ssi.sys_user_id inner join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where " + whereStr + " ssi.deleted_at is null  order by ssi.stu_num limit ?,?"
+	err = global.GVA_DB.Raw(sql, limit, offset).Scan(&limit).Error
+	if err != nil {
+		return list, total, err
+	}
+	fmt.Println("hello World")
+	return list, total, nil
+}
+
+// 查看毕业生就业详情
+func (m *MyApiService) GetStudentsDetailsResp(reqInfo r.GetStudentsDetails, sysId uint) (info response.StudentDetails, err error) {
+
+	sql := "SELECT ssji.stu_num StudentNum, ssi.stu_name StudentName, ssji.company_name CompanyName, ssji.job_city JobCity, ssji.job_title JobTitle, ssji.job_salary JobSalary FROM sys_stu_job_infos ssji INNER JOIN sys_stu_infos ssi ON ssi.stu_num = ssji.stu_num WHERE ssji.stu_num = ? "
+	err = global.GVA_DB.Raw(sql, reqInfo.StuNumber).Scan(&info).Error
+	if err != nil {
+		return info, err
+	}
+	return info, err
+}
+
+// 编辑毕业生信息
+func (m *MyApiService) UpdStudentsInfosResp(reqInfo r.UpdStudentsInfos, sysId uint) {
+
 	fmt.Println("hello World")
 }
-func (m *MyApiService) GetStudentsDetailsResp() {
-	fmt.Println("hello World")
-}
-func (m *MyApiService) UpdStudentsInfosResp() {
-	fmt.Println("hello World")
-}
+
+// 删除毕业生信息
 func (m *MyApiService) DeleteStudentsInfosResp() {
 	fmt.Println("hello World")
 }
