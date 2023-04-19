@@ -36,6 +36,24 @@ func (m *MyApi) GetStudentsList(c *gin.Context) {
 	}
 }
 
+// 查看毕业生就业详情
+func (m *MyApi) GetByStuNumber(c *gin.Context) {
+	var reqInfo r.GetStudentsDetails
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	list, err := myApiService.GetStudentsDetailsResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(list, "ok", c)
+}
+
+/*-----------------------------------------------------------------------*/
+
 // 根据条件获取毕业生信息列表
 func (m *MyApi) GetStudentsListByConditions(c *gin.Context) {
 	var reqInfo r.GetStudentsByConditions
@@ -59,22 +77,6 @@ func (m *MyApi) GetStudentsListByConditions(c *gin.Context) {
 			PageSize: reqInfo.PageInfo.PageSize,
 		}, "ok", c)
 	}
-}
-
-// 查看毕业生就业详情
-func (m *MyApi) GetStudentsDetails(c *gin.Context) {
-	var reqInfo r.GetStudentsDetails
-	err := c.ShouldBindJSON(&reqInfo)
-	if err != nil {
-		return
-	}
-	Id := utils.GetUserID(c)
-	list, err := myApiService.GetStudentsDetailsResp(reqInfo, Id)
-	if err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-	response.OkWithDetailed(list, "ok", c)
 }
 
 // 编辑毕业生信息

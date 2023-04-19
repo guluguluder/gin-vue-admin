@@ -1,21 +1,27 @@
 package response
 
 type StudentsList struct {
-	StudentNum      string `json:"studentNum"`
-	StudentName     string `json:"studentName"`
-	CollegeNum      string `json:"collegeNum"`
-	CollegeName     string `json:"collegeName"`
-	StudentClassNum string `json:"studentClassNum"`
-	Phone           string `json:"phone"`
-	Email           string `json:"email"`
-	Employed        string `json:"employed"`
+	ID          string `json:"ID"`
+	StuNumber   string `json:"stuNumber"`
+	StuName     string `json:"stuName"`
+	StuSex      string `json:"stuSex"`
+	ClassNumber string `json:"classNumber"`
+	GradeNumber string `json:"gradeNumber"`
+	CollegeName string `json:"collegeName"`
+	Phone       string `json:"phone"`
+	Email       string `json:"email"`
 }
 
 type StudentDetails struct {
-	StudentName string `json:"studentName"`
-	StudentNum  string `json:"studentNum"`
-	CompanyName string `json:"companyName"`
-	JobCity     string `json:"jobCity"`
-	JobTitle    string `json:"jobTitle"`  // 工作职位
-	JobSalary   string `json:"jobSalary"` // 工作薪资
+	ID          string `json:"ID"`
+	StuNumber   string `json:"stuNumber"`
+	StuName     string `json:"stuName"`
+	StuSex      string `json:"stuSex"`
+	ClassNumber string `json:"classNumber"`
+	GradeNumber string `json:"gradeNumber"`
+	CollegeName string `json:"collegeName"`
+	StarTime    string `json:"startTime"`
+	EndTime     string `json:"endTime"`
+	Phone       string `json:"phone"`
+	Email       string `json:"email"`
 }

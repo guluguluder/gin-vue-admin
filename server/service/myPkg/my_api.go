@@ -6,6 +6,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	r "github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/response"
+	"gorm.io/gorm"
 )
 
 type MyApiService struct {
@@ -19,7 +20,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint)
 	limit := reqInfo.PageSize
 	offset := reqInfo.PageSize * (reqInfo.Page - 1)
 
-	totalSQL := "select count(*) from( select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi left join sys_users su on su.id = ssi.sys_user_id left join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where ssi.deleted_at is null order by ssi.stu_num) t "
+	totalSQL := "select count(*) from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number "
 	if err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error; err != nil {
 		return list, total, err
 	}
@@ -27,11 +28,22 @@ func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint)
 		return list, total, nil
 	}
 
-	sql := "select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi left join sys_users su on su.id = ssi.sys_user_id left join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where ssi.deleted_at is null order by ssi.stu_num limit ? ,?"
+	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number limit ? ,?"
 	if err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error; err != nil {
 		return list, total, err
 	}
 	return list, total, nil
+}
+
+// 查看毕业生就业详情
+func (m *MyApiService) GetStudentsDetailsResp(reqInfo r.GetStudentsDetails, sysId uint) (info response.StudentDetails, err error) {
+
+	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , s.start_time StarTime, s.end_time EndTime, c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.stu_number = ?"
+	err = global.GVA_DB.Raw(sql, reqInfo.StuNumber).Scan(&info).Error
+	if err != nil {
+		return info, err
+	}
+	return info, err
 }
 
 // 根据条件获取毕业生信息列表
@@ -66,20 +78,16 @@ func (m *MyApiService) GetStudentsListByConditionsResp(reqInfo r.GetStudentsByCo
 	return list, total, nil
 }
 
-// 查看毕业生就业详情
-func (m *MyApiService) GetStudentsDetailsResp(reqInfo r.GetStudentsDetails, sysId uint) (info response.StudentDetails, err error) {
-
-	sql := "SELECT ssji.stu_num StudentNum, ssi.stu_name StudentName, ssji.company_name CompanyName, ssji.job_city JobCity, ssji.job_title JobTitle, ssji.job_salary JobSalary FROM sys_stu_job_infos ssji INNER JOIN sys_stu_infos ssi ON ssi.stu_num = ssji.stu_num WHERE ssji.stu_num = ? "
-	err = global.GVA_DB.Raw(sql, reqInfo.StuNumber).Scan(&info).Error
-	if err != nil {
-		return info, err
-	}
-	return info, err
-}
-
 // 编辑毕业生信息
 func (m *MyApiService) UpdStudentsInfosResp(reqInfo r.UpdStudentsInfos, sysId uint) {
 
+	err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
 	fmt.Println("hello World")
 }
 
