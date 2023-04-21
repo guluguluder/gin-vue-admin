@@ -66,9 +66,30 @@ func (m *MyApi) SetStudentInfo(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	} else {
-		response.Ok(c)
+		response.OkWithMessage("操作成功", c)
 	}
 
+}
+
+// 删除学生
+func (m *MyApi) DeleteStudent(c *gin.Context) {
+	var reqId r.DelStudentReq
+	err := c.ShouldBindJSON(&reqId)
+	if err != nil {
+		return
+	}
+	err = utils.Verify(reqId, utils.IdVerify)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	err = myApiService.DeleteStudentResp(reqId, Id)
+	if err != nil {
+		response.FailWithMessage("操作失败："+err.Error(), c)
+		return
+	}
+	response.OkWithMessage("操作成功", c)
 }
 
 /*-----------------------------------------------------------------------*/

@@ -16,6 +16,7 @@ func (m *MyApiRouter) InitMyApiRouter(Router *gin.RouterGroup) {
 		MyRouterGroup.POST("v1/students/list/getAll", myApi.GetStudentsList)          // 获取毕业生信息列表
 		MyRouterGroup.POST("v1/students/detail/getByStuNumber", myApi.GetByStuNumber) // 获取学生信息详情
 		MyRouterGroup.POST("v1/students/update/setStudentInfo", myApi.SetStudentInfo) // 编辑学生信息
+		MyRouterGroup.POST("v1/students/delete/deleteStudent", myApi.DeleteStudent)   // 删除学生
 		/*-----------------------------------------------------------------------------------------*/
 		MyRouterGroup.POST("v1/students/list/getByConditions", myApi.GetStudentsListByConditions) // 根据条件获取毕业生信息列表
 		//MyRouterGroup.POST("v1/students/details/get", myApi.GetStudentsDetails)                   // 查看毕业生就业详情

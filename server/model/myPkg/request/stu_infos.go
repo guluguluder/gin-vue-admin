@@ -26,6 +26,13 @@ type UpdStudentsReq struct {
 	Phone       string `json:"phone"`
 	Email       string `json:"email"`
 }
+
+type DelStudentReq struct {
+	ID string `json:"ID" form:"id"` // 主键
+}
+
+/*================================================================*/
+
 type UpdStudentsInfos struct {
 	StudentName string `json:"studentName"`
 	CollegeName string `json:"collegeName"`

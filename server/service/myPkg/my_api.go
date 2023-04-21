@@ -10,6 +10,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"gorm.io/gorm"
+	"time"
 )
 
 type MyApiService struct {
@@ -23,7 +24,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint)
 	limit := reqInfo.PageSize
 	offset := reqInfo.PageSize * (reqInfo.Page - 1)
 
-	totalSQL := "select count(*) from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number "
+	totalSQL := "select count(*) from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.deleted_at is null "
 	if err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error; err != nil {
 		return list, total, err
 	}
@@ -31,7 +32,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint)
 		return list, total, nil
 	}
 
-	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number limit ? ,?"
+	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.deleted_at is null limit ? ,?"
 	if err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error; err != nil {
 		return list, total, err
 	}
@@ -41,7 +42,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint)
 // 查看毕业生就业详情
 func (m *MyApiService) GetStudentsDetailsResp(reqInfo r.GetStudentsDetails, sysId uint) (info response.StudentDetails, err error) {
 
-	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , s.start_time StarTime, s.end_time EndTime, c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.stu_number = ?"
+	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , s.start_time StarTime, s.end_time EndTime, c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number and c.deleted_at is null left join colleges c2 on c.college_number = c2.college_number and c2.deleted_at is null where s.stu_number = ? and s.deleted_at is null"
 	err = global.GVA_DB.Raw(sql, reqInfo.StuNumber).Scan(&info).Error
 	if err != nil {
 		return info, err
@@ -55,13 +56,13 @@ func (m *MyApiService) SetStudentInfoResp(reqInfo r.UpdStudentsReq, sysId uint) 
 
 	err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		var sysStuId string
-		sql := "select sys_stu_id  from students s where s.id = ?"
+		sql := "select sys_stu_id  from students s where s.id = ? and deleted_at is null"
 		if err := tx.Raw(sql, reqInfo.ID).Scan(&sysStuId).Error; err != nil {
 			return err
 		}
 
 		//更新sys_user表
-		if err := tx.Model(&system.SysUser{}).Where("id = ?", sysStuId).Updates(system.SysUser{
+		if err := tx.Model(&system.SysUser{}).Where("id = ? and deleted_at is null", sysStuId).Updates(system.SysUser{
 			//Username: reqInfo.StuNumber,
 			NickName: reqInfo.StuName,
 			Phone:    reqInfo.Phone,
@@ -70,7 +71,7 @@ func (m *MyApiService) SetStudentInfoResp(reqInfo r.UpdStudentsReq, sysId uint) 
 			return err
 		}
 		// 校验学院是否存在
-		sql = "select c.college_number  from colleges c where c.college_name = ? "
+		sql = "select c.college_number  from colleges c where c.college_name = ? and c.deleted_at is null "
 		var collegeNumber string
 		if err := tx.Raw(sql, reqInfo.CollegeName).Scan(&collegeNumber).Error; err != nil {
 			return err
@@ -79,7 +80,7 @@ func (m *MyApiService) SetStudentInfoResp(reqInfo r.UpdStudentsReq, sysId uint) 
 			return errors.New("该学院不存在")
 		}
 		// 校验班级是否合法
-		sql = "select  c.class_number  from classes c where c.college_number = ? and c.class_number = ? "
+		sql = "select  c.class_number  from classes c where c.college_number = ? and c.class_number = ? and c.deleted_at is null "
 		var classNumber string
 		if err := tx.Raw(sql, collegeNumber, reqInfo.ClassNumber).Scan(&classNumber).Error; err != nil {
 			return err
@@ -87,34 +88,34 @@ func (m *MyApiService) SetStudentInfoResp(reqInfo r.UpdStudentsReq, sysId uint) 
 		if classNumber == "" {
 			return errors.New("该班级不存在")
 		}
-		// TODO:修改学院或班级需要对应的同步人数
+		// 修改学院或班级需要对应的同步人数
 		var data map[string]interface{}
-		sql = "select s.class_number ,s.college_number  from students s  where s.id = ?"
+		sql = "select s.class_number ,s.college_number  from students s  where s.id = ? and s.deleted_at is null "
 		if err := tx.Raw(sql, reqInfo.ID).Scan(&data).Error; err != nil {
 			return err
 		}
 		if data["class_number"] != reqInfo.ClassNumber {
-			err := tx.Exec("update classes set total_stu = total_stu - 1 where class_number = ?", data["class_number"]).Error
+			err := tx.Exec("update classes set total_stu = total_stu - 1 where class_number = ? and deleted_at is null", data["class_number"]).Error
 			if err != nil {
 				return err
 			}
-			err = tx.Exec("update classes set total_stu = total_stu + 1 where class_number = ?", reqInfo.ClassNumber).Error
+			err = tx.Exec("update classes set total_stu = total_stu + 1 where class_number = ? and deleted_at is null", reqInfo.ClassNumber).Error
 			if err != nil {
 				return err
 			}
 		}
 		if data["college_number"] != collegeNumber {
-			err := tx.Exec("update colleges set total_stu = total_stu - 1 where college_number = ?", data["college_number"]).Error
+			err := tx.Exec("update colleges set total_stu = total_stu - 1 where college_number = ? and deleted_at is null", data["college_number"]).Error
 			if err != nil {
 				return err
 			}
-			err = tx.Exec("update colleges set total_stu = total_stu + 1 where college_number = ?", collegeNumber).Error
+			err = tx.Exec("update colleges set total_stu = total_stu + 1 where college_number = ? and deleted_at is null", collegeNumber).Error
 			if err != nil {
 				return err
 			}
 		}
 		// 更新students表
-		if err := tx.Model(&myPkg.Students{}).Where("sys_stu_id = ?", sysStuId).Updates(myPkg.Students{
+		if err := tx.Model(&myPkg.Students{}).Where("sys_stu_id = ? and deleted_at is null", sysStuId).Updates(myPkg.Students{
 			//StuNumber:     reqInfo.StuNumber,
 			StuName:       reqInfo.StuName,
 			StuSex:        reqInfo.StuSex,
@@ -130,6 +131,40 @@ func (m *MyApiService) SetStudentInfoResp(reqInfo r.UpdStudentsReq, sysId uint) 
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// 删除学生
+func (m *MyApiService) DeleteStudentResp(reqId r.DelStudentReq, sysId uint) error {
+
+	err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		// todo: 删除students表数据,同步修改classes 和 colleges 表的总人数
+		var data map[string]interface{}
+		sql := "select s.class_number ,s.college_number  from students s  where s.id = ? and s.deleted_at is null"
+		if err := tx.Raw(sql, reqId.ID).Scan(&data).Error; err != nil {
+			return err
+		}
+		// 更新班级表
+		err := tx.Exec("update classes set total_stu = total_stu - 1 where class_number = ? and deleted_at is null", data["class_number"]).Error
+		if err != nil {
+			return err
+		}
+		// 更新学院表
+		err = tx.Exec("update colleges set total_stu = total_stu - 1 where college_number = ? and deleted_at is null", data["college_number"]).Error
+		if err != nil {
+			return err
+		}
+		// 删除学生信息
+		err = tx.Model(&myPkg.Students{}).Where("id = ? and deleted_at is null", reqId.ID).Update("deleted_at", time.Now()).Error
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
