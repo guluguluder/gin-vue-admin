@@ -25,9 +25,9 @@
       </el-form>
     </div>
     <div class="gva-table-box">
-      <div class="gva-btn-list">
-        <el-button size="small" type="primary" icon="plus" @click="addUser">新增用户</el-button>
-      </div>
+<!--      <div class="gva-btn-list">-->
+<!--        <el-button size="small" type="primary" icon="plus" @click="addUser">新增用户</el-button>-->
+<!--      </div>-->
       <el-table
         :data="tableData"
         row-key="ID"
@@ -87,12 +87,12 @@
     >
       <div style="height:60vh;overflow:auto;padding:0 12px;">
         <el-form ref="userForm" :rules="rules" :model="userInfo" label-width="80px">
-          <el-form-item v-if="dialogFlag === 'add'" label="用户名" prop="userName">
-            <el-input v-model="userInfo.userName" />
-          </el-form-item>
-          <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password">
-            <el-input v-model="userInfo.password" />
-          </el-form-item>
+<!--          <el-form-item v-if="dialogFlag === 'add'" label="用户名" prop="userName">-->
+<!--            <el-input v-model="userInfo.userName" />-->
+<!--          </el-form-item>-->
+<!--          <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password">-->
+<!--            <el-input v-model="userInfo.password" />-->
+<!--          </el-form-item>-->
           <!--          <el-form-item label="ID" prop="Id">-->
           <!--            <el-input v-model="userInfo.ID" />-->
           <!--          </el-form-item>-->
@@ -123,7 +123,6 @@
         </el-form>
 
       </div>
-
       <template #footer>
         <div class="dialog-footer">
           <el-button size="small" @click="closeAddUserDialog">取 消</el-button>
