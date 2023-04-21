@@ -3,29 +3,19 @@
     <div class="gva-search-box">
       <el-form ref="searchForm" :inline="true" :model="searchInfo">
         <el-form-item label="班级">
-          <el-input placeholder="班级" />
+          <el-input v-model="searchInfo.classNumber" placeholder="班级" />
         </el-form-item>
         <el-form-item label="学号">
-          <el-input placeholder="学号" />
+          <el-input v-model="searchInfo.stuNumber" placeholder="学号" />
         </el-form-item>
-        <!--        <el-form-item label="是否签约">-->
-        <!--          <el-select clearable placeholder="请选择">-->
-        <!--            &lt;!&ndash;            <el-option&ndash;&gt;-->
-        <!--            &lt;!&ndash;                v-for="item in methodOptions"&ndash;&gt;-->
-        <!--            &lt;!&ndash;                :key="item.value"&ndash;&gt;-->
-        <!--            &lt;!&ndash;                :label="`${item.label}(${item.value})`"&ndash;&gt;-->
-        <!--            &lt;!&ndash;                :value="item.value"&ndash;&gt;-->
-        <!--            &lt;!&ndash;            />&ndash;&gt;-->
-        <!--          </el-select>-->
-        <!--        </el-form-item>-->
         <el-form-item label="所属学院">
-          <el-select clearable placeholder="请选择">
-            <!--            <el-option-->
-            <!--                v-for="item in methodOptions"-->
-            <!--                :key="item.value"-->
-            <!--                :label="`${item.label}(${item.value})`"-->
-            <!--                :value="item.value"-->
-            <!--            />-->
+          <el-select v-model="searchInfo.collegeNumber" clearable placeholder="请选择">
+            <el-option
+              v-for="item in methodOptions"
+              :key="item.collegeNumber"
+              :label="item.collegeName"
+              :value="item.collegeNumber"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -47,7 +37,7 @@
             <CustomPic style="margin-top:8px" :pic-src="scope.row.headerImg" />
           </template>
         </el-table-column>
-        <el-table-column align="left" label="ID" min-width="50" prop="ID" />
+        <!--        <el-table-column align="left" label="ID" min-width="50" prop="ID" />-->
         <el-table-column align="left" label="用户名(学号)" min-width="150" prop="stuNumber" />
         <el-table-column align="left" label="昵称(姓名)" min-width="100" prop="stuName" />
         <el-table-column align="left" label="性别" min-width="80" prop="stuSex" />
@@ -103,8 +93,26 @@
           <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password">
             <el-input v-model="userInfo.password" />
           </el-form-item>
-          <el-form-item label="昵称" prop="nickName">
-            <el-input v-model="userInfo.nickName" />
+          <!--          <el-form-item label="ID" prop="Id">-->
+          <!--            <el-input v-model="userInfo.ID" />-->
+          <!--          </el-form-item>-->
+          <el-form-item label="学号" prop="stuNumber">
+            <el-input v-model="userInfo.stuNumber" />
+          </el-form-item>
+          <el-form-item label="姓名" prop="stuName">
+            <el-input v-model="userInfo.stuName" />
+          </el-form-item>
+          <el-form-item label="性别" prop="stuSex">
+            <el-input v-model="userInfo.stuSex" />
+          </el-form-item>
+          <el-form-item label="所属学院" prop="collegeName">
+            <el-input v-model="userInfo.collegeName" />
+          </el-form-item>
+          <el-form-item label="班级" prop="classNumber">
+            <el-input v-model="userInfo.classNumber" />
+          </el-form-item>
+          <el-form-item label="年级" prop="gradeNumber">
+            <el-input v-model="userInfo.gradeNumber" />
           </el-form-item>
           <el-form-item label="手机号" prop="phone">
             <el-input v-model="userInfo.phone" />
@@ -112,31 +120,6 @@
           <el-form-item label="邮箱" prop="email">
             <el-input v-model="userInfo.email" />
           </el-form-item>
-          <el-form-item label="用户角色" prop="authorityId">
-            <el-cascader
-              v-model="userInfo.authorityIds"
-              style="width:100%"
-              :options="authOptions"
-              :show-all-levels="false"
-              :props="{ multiple:true,checkStrictly: true,label:'authorityName',value:'authorityId',disabled:'disabled',emitPath:false}"
-              :clearable="false"
-            />
-          </el-form-item>
-          <el-form-item label="启用" prop="disabled">
-            <el-switch
-              v-model="userInfo.enable"
-              inline-prompt
-              :active-value="1"
-              :inactive-value="2"
-            />
-          </el-form-item>
-          <el-form-item label="头像" label-width="80px">
-            <div style="display:inline-block" @click="openHeaderChange">
-              <img v-if="userInfo.headerImg" alt="头像" class="header-img-box" :src="(userInfo.headerImg && userInfo.headerImg.slice(0, 4) !== 'http')?path+userInfo.headerImg:userInfo.headerImg">
-              <div v-else class="header-img-box">从媒体库选择</div>
-            </div>
-          </el-form-item>
-
         </el-form>
 
       </div>
@@ -152,6 +135,7 @@
     <ChooseImg ref="chooseImg" :target="userInfo" :target-key="`headerImg`" />
 
     <!--  /////////////////////////////////////////////////////////////////////////////////////////////////////////  -->
+    <!--    详情弹窗   -->
     <el-dialog
       v-model="studentDetailDialog"
       custom-class="user-dialog"
@@ -219,7 +203,7 @@ import {
   register,
   deleteUser,
 } from '@/api/user'
-import { getDetailByStuNumber, getStudentList } from '@/api/student'
+import { deleteStudent, getColleges, getDetailByStuNumber, getStudentList, setStudentInfo } from '@/api/student'
 import { getAuthorityList } from '@/api/authority'
 import CustomPic from '@/components/customPic/index.vue'
 import ChooseImg from '@/components/chooseImg/index.vue'
@@ -254,11 +238,33 @@ const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
-const searchInfo = ref({})
+const searchInfo = ref({
+  stuNumber: '',
+  classNumber: '',
+  collegeNumber: '',
+})
+
+const methodOptions = ref([{
+  collegeNumber: '',
+  collegeName: '',
+}])
 
 const onReset = () => {
-  searchInfo.value = {}
+  searchInfo.value = {
+    // stuNumber: '',
+    // classNumber: '',
+    // collegeNumber: '',
+  }
 }
+const getCollegeData = async() => {
+  const res = await getColleges({})
+  if (res.code === 0) {
+    methodOptions.value = res.data
+  }
+  console.log(res.data)
+}
+getCollegeData()
+
 // 搜索
 
 const onSubmit = () => {
@@ -280,8 +286,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  // const table = await getUserList({ page: page.value, pageSize: pageSize.value })
-  const table = await getStudentList({ page: page.value, pageSize: pageSize.value })
+  const table = await getStudentList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -322,7 +327,8 @@ const setOptions = (authData) => {
 }
 
 const deleteUserFunc = async(row) => {
-  const res = await deleteUser({ id: row.ID })
+  // const res = await deleteUser({ id: row.ID })
+  const res = await deleteStudent({ Id: row.ID })
   if (res.code === 0) {
     ElMessage.success('删除成功')
     row.visible = false
@@ -332,13 +338,15 @@ const deleteUserFunc = async(row) => {
 
 // 弹窗相关
 const userInfo = ref({
-  username: '',
-  password: '',
-  nickName: '',
-  headerImg: '',
-  authorityId: '',
-  authorityIds: [],
-  enable: 1,
+  ID: '',
+  stuNumber: '',
+  stuName: '',
+  stuSex: '',
+  collegeName: '',
+  classNumber: '',
+  gradeNumber: '',
+  phone: '',
+  email: '',
 })
 const studentDetails = ref({
   stuNumber: '',
@@ -377,7 +385,7 @@ const rules = ref({
 })
 const userForm = ref(null)
 const enterAddUserDialog = async() => {
-  userInfo.value.authorityId = userInfo.value.authorityIds[0]
+  // userInfo.value.authorityId = userInfo.value.authorityIds[0]
   userForm.value.validate(async valid => {
     if (valid) {
       const req = {
@@ -392,7 +400,8 @@ const enterAddUserDialog = async() => {
         }
       }
       if (dialogFlag.value === 'edit') {
-        const res = await setUserInfo(req)
+        // const res = await setUserInfo(req)
+        const res = await setStudentInfo(req)
         if (res.code === 0) {
           ElMessage({ type: 'success', message: '编辑成功' })
           await getTableData()
@@ -423,34 +432,34 @@ const addUser = () => {
   addUserDialog.value = true
 }
 
-const tempAuth = {}
-const changeAuthority = async(row, flag, removeAuth) => {
-  if (flag) {
-    if (!removeAuth) {
-      tempAuth[row.ID] = [...row.authorityIds]
-    }
-    return
-  }
-  await nextTick()
-  const res = await setUserAuthorities({
-    ID: row.ID,
-    authorityIds: row.authorityIds
-  })
-  if (res.code === 0) {
-    ElMessage({ type: 'success', message: '角色设置成功' })
-  } else {
-    if (!removeAuth) {
-      row.authorityIds = [...tempAuth[row.ID]]
-      delete tempAuth[row.ID]
-    } else {
-      row.authorityIds = [removeAuth, ...row.authorityIds]
-    }
-  }
-}
+// const tempAuth = {}
+// const changeAuthority = async(row, flag, removeAuth) => {
+//   if (flag) {
+//     if (!removeAuth) {
+//       tempAuth[row.ID] = [...row.authorityIds]
+//     }
+//     return
+//   }
+//   await nextTick()
+//   const res = await setUserAuthorities({
+//     ID: row.ID,
+//     authorityIds: row.authorityIds
+//   })
+//   if (res.code === 0) {
+//     ElMessage({ type: 'success', message: '角色设置成功' })
+//   } else {
+//     if (!removeAuth) {
+//       row.authorityIds = [...tempAuth[row.ID]]
+//       delete tempAuth[row.ID]
+//     } else {
+//       row.authorityIds = [removeAuth, ...row.authorityIds]
+//     }
+//   }
+// }
 
 const openDetails = async(row) => {
   dialogFlag.value = 'details'
-  searchInfo.value = userInfo.value.username
+  // searchInfo.value = userInfo.value.stuNumber
   const res = await getDetailByStuNumber({ stuNumber: row.stuNumber })
   studentDetails.value = res.data
   studentDetailDialog.value = true
@@ -459,23 +468,24 @@ const openDetails = async(row) => {
 const openEdit = (row) => {
   dialogFlag.value = 'edit'
   userInfo.value = JSON.parse(JSON.stringify(row))
+  console.log(row.ID)
   addUserDialog.value = true
 }
-
-const switchEnable = async(row) => {
-  userInfo.value = JSON.parse(JSON.stringify(row))
-  await nextTick()
-  const req = {
-    ...userInfo.value
-  }
-  const res = await setUserInfo(req)
-  if (res.code === 0) {
-    ElMessage({ type: 'success', message: `${req.enable === 2 ? '禁用' : '启用'}成功` })
-    await getTableData()
-    userInfo.value.headerImg = ''
-    userInfo.value.authorityIds = []
-  }
-}
+//
+// const switchEnable = async(row) => {
+//   userInfo.value = JSON.parse(JSON.stringify(row))
+//   await nextTick()
+//   const req = {
+//     ...userInfo.value
+//   }
+//   const res = await setUserInfo(req)
+//   if (res.code === 0) {
+//     ElMessage({ type: 'success', message: `${req.enable === 2 ? '禁用' : '启用'}成功` })
+//     await getTableData()
+//     userInfo.value.headerImg = ''
+//     userInfo.value.authorityIds = []
+//   }
+// }
 
 </script>
 
