@@ -13,7 +13,7 @@ type MyApi struct {
 
 // 获取毕业生信息列表
 func (m *MyApi) GetStudentsList(c *gin.Context) {
-	var reqInfo request.PageInfo
+	var reqInfo r.SearchStu
 	err := c.ShouldBindJSON(&reqInfo)
 	if err != nil {
 		return
@@ -30,8 +30,8 @@ func (m *MyApi) GetStudentsList(c *gin.Context) {
 		response.OkWithDetailed(response.PageResult{
 			List:     lists,
 			Total:    total,
-			Page:     reqInfo.Page,
-			PageSize: reqInfo.PageSize,
+			Page:     reqInfo.PageInfo.Page,
+			PageSize: reqInfo.PageInfo.PageSize,
 		}, "ok", c)
 	}
 }
@@ -92,32 +92,44 @@ func (m *MyApi) DeleteStudent(c *gin.Context) {
 	response.OkWithMessage("操作成功", c)
 }
 
-/*-----------------------------------------------------------------------*/
-
-// 根据条件获取毕业生信息列表
-func (m *MyApi) GetStudentsListByConditions(c *gin.Context) {
-	var reqInfo r.GetStudentsByConditions
-	err := c.ShouldBindJSON(&reqInfo)
-	if err != nil {
-		return
-	}
+// 获取下拉列表学院
+func (m *MyApi) GetColleges(c *gin.Context) {
 	Id := utils.GetUserID(c)
-	lists, total, err := myApiService.GetStudentsListByConditionsResp(reqInfo, Id)
+	list, err := myApiService.GetCollegesResp(Id)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
-	} else if total == 0 {
-		response.OkWithMessage("there is no data", c)
-		return
 	} else {
-		response.OkWithDetailed(response.PageResult{
-			List:     lists,
-			Total:    total,
-			Page:     reqInfo.PageInfo.Page,
-			PageSize: reqInfo.PageInfo.PageSize,
-		}, "ok", c)
+		response.OkWithDetailed(list, "ok", c)
 	}
 }
+
+/*-----------------------------------------------------------------------*/
+
+// 根据条件获取毕业生信息列表
+//func (m *MyApi) GetStudentsListByConditions(c *gin.Context) {
+//	var reqInfo r.SearchStu
+//	err := c.ShouldBindJSON(&reqInfo)
+//	if err != nil {
+//		return
+//	}
+//	Id := utils.GetUserID(c)
+//	lists, total, err := myApiService.GetStudentsListByConditionsResp(reqInfo, Id)
+//	if err != nil {
+//		response.FailWithMessage(err.Error(), c)
+//		return
+//	} else if total == 0 {
+//		response.OkWithMessage("there is no data", c)
+//		return
+//	} else {
+//		response.OkWithDetailed(response.PageResult{
+//			List:     lists,
+//			Total:    total,
+//			Page:     reqInfo.PageInfo.Page,
+//			PageSize: reqInfo.PageInfo.PageSize,
+//		}, "ok", c)
+//	}
+//}
 
 // 编辑毕业生信息
 func (m *MyApi) UpdStudentsInfos(c *gin.Context) {

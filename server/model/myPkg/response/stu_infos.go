@@ -8,6 +8,8 @@ type StudentsList struct {
 	ClassNumber string `json:"classNumber"`
 	GradeNumber string `json:"gradeNumber"`
 	CollegeName string `json:"collegeName"`
+	StarTime    string `json:"startTime"`
+	EndTime     string `json:"endTime"`
 	Phone       string `json:"phone"`
 	Email       string `json:"email"`
 }
@@ -24,4 +26,9 @@ type StudentDetails struct {
 	EndTime     string `json:"endTime"`
 	Phone       string `json:"phone"`
 	Email       string `json:"email"`
+}
+
+type CollegeList struct {
+	CollegeNumber string `json:"collegeNumber"`
+	CollegeName   string `json:"collegeName"`
 }

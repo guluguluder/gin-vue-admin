@@ -17,14 +17,25 @@ type MyApiService struct {
 }
 
 //获取毕业生信息列表
-func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint) (list []response.StudentsList, total int64, err error) {
+func (m *MyApiService) GetStudentsListResp(reqInfo r.SearchStu, sysId uint) (list []response.StudentsList, total int64, err error) {
 
 	// TODO:身份权限校验
 
 	limit := reqInfo.PageSize
 	offset := reqInfo.PageSize * (reqInfo.Page - 1)
 
-	totalSQL := "select count(*) from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.deleted_at is null "
+	whereStr := ""
+	if reqInfo.ClassNumber != "" {
+		whereStr = fmt.Sprintf("%v s.class_number = '%v' and ", whereStr, reqInfo.ClassNumber)
+	}
+	if reqInfo.StuNumber != "" {
+		whereStr = fmt.Sprintf("%v s.stu_number = '%v' and ", whereStr, reqInfo.StuNumber)
+	}
+	if reqInfo.CollegeNumber != "" {
+		whereStr = fmt.Sprintf("%v s.college_number = '%v' and ", whereStr, reqInfo.CollegeNumber)
+	}
+
+	totalSQL := "select count(*) from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where " + whereStr + " s.deleted_at is null "
 	if err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error; err != nil {
 		return list, total, err
 	}
@@ -32,7 +43,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo request.PageInfo, sysId uint)
 		return list, total, nil
 	}
 
-	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.deleted_at is null limit ? ,?"
+	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where " + whereStr + " s.deleted_at is null limit ? ,?"
 	if err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error; err != nil {
 		return list, total, err
 	}
@@ -168,39 +179,45 @@ func (m *MyApiService) DeleteStudentResp(reqId r.DelStudentReq, sysId uint) erro
 	return nil
 }
 
+// 获取下拉列表学院
+func (m *MyApiService) GetCollegesResp(sysId uint) (colleges []response.CollegeList, err error) {
+	sql := "select c.college_number CollegeNumber ,c.college_name CollegeName from colleges c order by c.id"
+	err = global.GVA_DB.Raw(sql).Scan(&colleges).Error
+	if err != nil {
+		return colleges, err
+	}
+	return colleges, nil
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表
-func (m *MyApiService) GetStudentsListByConditionsResp(reqInfo r.GetStudentsByConditions, sysId uint) (list []response.StudentsList, total int64, err error) {
-
-	limit := reqInfo.PageInfo.PageSize
-	offset := reqInfo.PageInfo.PageSize * (reqInfo.PageInfo.Page - 1)
-	whereStr := ""
-	if reqInfo.ClassNumber != "" {
-		whereStr = fmt.Sprintf("'%v' ssi.stu_class_num = '%v' and ", whereStr, reqInfo.ClassNumber)
-	} else if reqInfo.StuNumber != "" {
-		whereStr = fmt.Sprintf("'%v' ssi.stu_num = '%v' and ", whereStr, reqInfo.StuNumber)
-	} else if reqInfo.IsEmployed != "" {
-		whereStr = fmt.Sprintf(" '%v' ssi.employed = '%v' and ", whereStr, reqInfo.IsEmployed)
-	} else if reqInfo.IsEmployed != "" {
-		whereStr = fmt.Sprintf("'%v' scci.college_name = '%v' and ", whereStr, reqInfo.CollegeName)
-	}
-
-	totalSQL := " select count(*) from sys_stu_infos ssi inner join sys_users su on su.id = ssi.sys_user_id inner join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where " + whereStr + " ssi.deleted_at is null  order by ssi.stu_num"
-	if err = global.GVA_DB.Raw(totalSQL).Error; err != nil {
-		return list, total, err
-	}
-	if total == 0 {
-		return list, total, nil
-	}
-	sql := "select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi inner join sys_users su on su.id = ssi.sys_user_id inner join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where " + whereStr + " ssi.deleted_at is null  order by ssi.stu_num limit ?,?"
-	err = global.GVA_DB.Raw(sql, limit, offset).Scan(&limit).Error
-	if err != nil {
-		return list, total, err
-	}
-	fmt.Println("hello World")
-	return list, total, nil
-}
+//func (m *MyApiService) GetStudentsListByConditionsResp(reqInfo r.SearchStu, sysId uint) (list []response.StudentsList, total int64, err error) {
+//
+//	limit := reqInfo.PageInfo.PageSize
+//	offset := reqInfo.PageInfo.PageSize * (reqInfo.PageInfo.Page - 1)
+//	whereStr := ""
+//	if reqInfo.ClassNumber != "" {
+//		whereStr = fmt.Sprintf("'%v' ssi.stu_class_num = '%v' and ", whereStr, reqInfo.ClassNumber)
+//	} else if reqInfo.StuNumber != "" {
+//		whereStr = fmt.Sprintf("'%v' ssi.stu_num = '%v' and ", whereStr, reqInfo.StuNumber)
+//	}
+//
+//	totalSQL := " select count(*) from sys_stu_infos ssi inner join sys_users su on su.id = ssi.sys_user_id inner join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where " + whereStr + " ssi.deleted_at is null  order by ssi.stu_num"
+//	if err = global.GVA_DB.Raw(totalSQL).Error; err != nil {
+//		return list, total, err
+//	}
+//	if total == 0 {
+//		return list, total, nil
+//	}
+//	sql := "select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi inner join sys_users su on su.id = ssi.sys_user_id inner join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where " + whereStr + " ssi.deleted_at is null  order by ssi.stu_num limit ?,?"
+//	err = global.GVA_DB.Raw(sql, limit, offset).Scan(&limit).Error
+//	if err != nil {
+//		return list, total, err
+//	}
+//	fmt.Println("hello World")
+//	return list, total, nil
+//}
 
 // 编辑毕业生信息
 func (m *MyApiService) UpdStudentsInfosResp(reqInfo r.UpdStudentsInfos, sysId uint) {

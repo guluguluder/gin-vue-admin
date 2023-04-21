@@ -2,16 +2,16 @@ package request
 
 import "github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 
-type GetStudentsByConditions struct {
-	PageInfo    request.PageInfo
-	ClassNumber string `json:"classNumber"`
-	StuNumber   string `json:"stuNumber"`
-	IsEmployed  string `json:"isEmployed"`
-	CollegeName string `json:"collegeName"`
+type SearchStu struct {
+	request.PageInfo
+	ClassNumber   string `json:"classNumber"`
+	StuNumber     string `json:"stuNumber"`
+	CollegeNumber string `json:"collegeNumber"`
+	//IsEmployed  string `json:"isEmployed"`
 }
 
 type GetStudentsDetails struct {
-	PageInfo  request.PageInfo
+	request.PageInfo
 	StuNumber string `json:"stuNumber"`
 }
 
