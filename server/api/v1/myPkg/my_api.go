@@ -52,6 +52,25 @@ func (m *MyApi) GetByStuNumber(c *gin.Context) {
 	response.OkWithDetailed(list, "ok", c)
 }
 
+// 编辑学生信息
+func (m *MyApi) SetStudentInfo(c *gin.Context) {
+	var reqInfo r.UpdStudentsReq
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	//TODO:身份权限校验
+	Id := utils.GetUserID(c)
+	err = myApiService.SetStudentInfoResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.Ok(c)
+	}
+
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表

@@ -1,11 +1,14 @@
 package myPkg
 
 import (
+	"errors"
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg"
 	r "github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/response"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"gorm.io/gorm"
 )
 
@@ -45,6 +48,92 @@ func (m *MyApiService) GetStudentsDetailsResp(reqInfo r.GetStudentsDetails, sysI
 	}
 	return info, err
 }
+
+// 编辑学生信息
+func (m *MyApiService) SetStudentInfoResp(reqInfo r.UpdStudentsReq, sysId uint) error {
+	// TODO:身份权限校验
+
+	err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		var sysStuId string
+		sql := "select sys_stu_id  from students s where s.id = ?"
+		if err := tx.Raw(sql, reqInfo.ID).Scan(&sysStuId).Error; err != nil {
+			return err
+		}
+
+		//更新sys_user表
+		if err := tx.Model(&system.SysUser{}).Where("id = ?", sysStuId).Updates(system.SysUser{
+			//Username: reqInfo.StuNumber,
+			NickName: reqInfo.StuName,
+			Phone:    reqInfo.Phone,
+			Email:    reqInfo.Email,
+		}).Error; err != nil {
+			return err
+		}
+		// 校验学院是否存在
+		sql = "select c.college_number  from colleges c where c.college_name = ? "
+		var collegeNumber string
+		if err := tx.Raw(sql, reqInfo.CollegeName).Scan(&collegeNumber).Error; err != nil {
+			return err
+		}
+		if collegeNumber == "" {
+			return errors.New("该学院不存在")
+		}
+		// 校验班级是否合法
+		sql = "select  c.class_number  from classes c where c.college_number = ? and c.class_number = ? "
+		var classNumber string
+		if err := tx.Raw(sql, collegeNumber, reqInfo.ClassNumber).Scan(&classNumber).Error; err != nil {
+			return err
+		}
+		if classNumber == "" {
+			return errors.New("该班级不存在")
+		}
+		// TODO:修改学院或班级需要对应的同步人数
+		var data map[string]interface{}
+		sql = "select s.class_number ,s.college_number  from students s  where s.id = ?"
+		if err := tx.Raw(sql, reqInfo.ID).Scan(&data).Error; err != nil {
+			return err
+		}
+		if data["class_number"] != reqInfo.ClassNumber {
+			err := tx.Exec("update classes set total_stu = total_stu - 1 where class_number = ?", data["class_number"]).Error
+			if err != nil {
+				return err
+			}
+			err = tx.Exec("update classes set total_stu = total_stu + 1 where class_number = ?", reqInfo.ClassNumber).Error
+			if err != nil {
+				return err
+			}
+		}
+		if data["college_number"] != collegeNumber {
+			err := tx.Exec("update colleges set total_stu = total_stu - 1 where college_number = ?", data["college_number"]).Error
+			if err != nil {
+				return err
+			}
+			err = tx.Exec("update colleges set total_stu = total_stu + 1 where college_number = ?", collegeNumber).Error
+			if err != nil {
+				return err
+			}
+		}
+		// 更新students表
+		if err := tx.Model(&myPkg.Students{}).Where("sys_stu_id = ?", sysStuId).Updates(myPkg.Students{
+			//StuNumber:     reqInfo.StuNumber,
+			StuName:       reqInfo.StuName,
+			StuSex:        reqInfo.StuSex,
+			CollegeNumber: collegeNumber,
+			ClassNumber:   reqInfo.ClassNumber,
+			GradeNumber:   reqInfo.GradeNumber,
+		}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表
 func (m *MyApiService) GetStudentsListByConditionsResp(reqInfo r.GetStudentsByConditions, sysId uint) (list []response.StudentsList, total int64, err error) {
