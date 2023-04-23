@@ -35,3 +35,24 @@ export const getColleges = (data) => {
     data: data
   })
 }
+export const getEmployedList = (data) => {
+  return service({
+    url: '/myapp/v1/students/get/getEmployedList',
+    method: 'post',
+    data: data
+  })
+}
+export const getEmployedDetails = (data) => {
+  return service({
+    url: '/myapp/v1/students/details/getEmployedDetails',
+    method: 'post',
+    data: data
+  })
+}
+export const setEmployedDetails = (data) => {
+  return service({
+    url: '/myapp/v1/students/update/setEmployedDetails',
+    method: 'post',
+    data: data
+  })
+}

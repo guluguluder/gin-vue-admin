@@ -2,30 +2,17 @@
   <div>
     <div class="gva-search-box">
       <el-form ref="searchForm" :inline="true" :model="searchInfo">
-        <el-form-item label="班级">
-          <el-input v-model="searchInfo.classNumber" placeholder="班级" />
-        </el-form-item>
         <el-form-item label="学号">
           <el-input v-model="searchInfo.stuNumber" placeholder="学号" />
         </el-form-item>
-        <el-form-item label="所属学院">
-          <el-select v-model="searchInfo.collegeNumber" clearable placeholder="请选择">
+        <el-form-item label="是否签约">
+          <el-select v-model="searchInfo.isEmployed" clearable placeholder="请选择">
             <el-option
               v-for="item in methodOptions"
-              :key="item.collegeNumber"
-              :label="item.collegeName"
-              :value="item.collegeNumber"
+              :key="item.value"
+              :label="`${item.label}(${item.value})`"
+              :value="item.value"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="是否签约">
-          <el-select clearable placeholder="请选择">
-            <!--            <el-option-->
-            <!--                v-for="item in methodOptions"-->
-            <!--                :key="item.value"-->
-            <!--                :label="`${item.label}(${item.value})`"-->
-            <!--                :value="item.value"-->
-            <!--            />-->
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -35,9 +22,6 @@
       </el-form>
     </div>
     <div class="gva-table-box">
-      <!--      <div class="gva-btn-list">-->
-      <!--        <el-button size="small" type="primary" icon="plus" @click="addUser">新增用户</el-button>-->
-      <!--      </div>-->
       <el-table
         :data="tableData"
         row-key="ID"
@@ -50,26 +34,25 @@
         <!--        <el-table-column align="left" label="ID" min-width="50" prop="ID" />-->
         <el-table-column align="left" label="用户名(学号)" min-width="150" prop="stuNumber" />
         <el-table-column align="left" label="昵称(姓名)" min-width="100" prop="stuName" />
-        <el-table-column align="left" label="性别" min-width="80" prop="stuSex" />
-        <el-table-column align="left" label="所属学院" min-width="100" prop="collegeName" />
-        <el-table-column align="left" label="班级" min-width="100" prop="classNumber" />
-        <el-table-column align="left" label="年级" min-width="100" prop="gradeNumber" />
         <el-table-column align="left" label="是否签约" min-width="180" prop="isEmployed" />
         <el-table-column align="left" label="签约公司" min-width="180" prop="companyName" />
+        <el-table-column align="left" label="公司城市" min-width="180" prop="jobCity" />
+        <el-table-column align="left" label="工作职位" min-width="180" prop="jobTitle" />
+        <el-table-column align="left" label="工资薪资" min-width="180" prop="jobSalary" />
         <el-table-column label="操作" min-width="250" fixed="right">
           <template #default="scope">
             <el-button type="primary" link icon="magic-stick" size="small" @click="openDetails(scope.row)">详情</el-button>
             <el-button type="primary" link icon="edit" size="small" @click="openEdit(scope.row)">编辑</el-button>
-            <el-popover v-model="scope.row.visible" placement="top" width="160">
-              <p>确定要删除此用户吗</p>
-              <div style="text-align: right; margin-top: 8px;">
-                <el-button size="small" type="primary" link @click="scope.row.visible = false">取消</el-button>
-                <el-button type="primary" size="small" @click="deleteUserFunc(scope.row)">确定</el-button>
-              </div>
-              <template #reference>
-                <el-button type="primary" link icon="delete" size="small">删除</el-button>
-              </template>
-            </el-popover>
+<!--            <el-popover v-model="scope.row.visible" placement="top" width="160">-->
+<!--              <p>确定要删除此用户吗</p>-->
+<!--              <div style="text-align: right; margin-top: 8px;">-->
+<!--                <el-button size="small" type="primary" link @click="scope.row.visible = false">取消</el-button>-->
+<!--                <el-button type="primary" size="small" @click="deleteUserFunc(scope.row)">确定</el-button>-->
+<!--              </div>-->
+<!--              <template #reference>-->
+<!--                <el-button type="primary" link icon="delete" size="small">删除</el-button>-->
+<!--              </template>-->
+<!--            </el-popover>-->
           </template>
         </el-table-column>
 
@@ -86,7 +69,7 @@
         />
       </div>
     </div>
-    <!--    -->
+    <!--   编辑弹窗    -->
     <el-dialog
       v-model="addUserDialog"
       custom-class="user-dialog"
@@ -97,32 +80,26 @@
     >
       <div style="height:60vh;overflow:auto;padding:0 12px;">
         <el-form ref="userForm" :rules="rules" :model="userInfo" label-width="80px">
-          <el-form-item v-if="dialogFlag === 'add'" label="用户名" prop="userName">
-            <el-input v-model="userInfo.userName" />
-          </el-form-item>
-          <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password">
-            <el-input v-model="userInfo.password" />
-          </el-form-item>
           <el-form-item label="学号" prop="stuNumber">
             <el-input v-model="userInfo.stuNumber" />
           </el-form-item>
           <el-form-item label="姓名" prop="stuName">
-            <el-input v-model="userInfo.stuName" />
+            <el-input v-model="userInfo.stuName"/>
           </el-form-item>
-          <el-form-item label="性别" prop="stuSex">
-            <el-input v-model="userInfo.stuSex" />
-          </el-form-item>
-          <el-form-item label="所属学院" prop="collegeName">
-            <el-input v-model="userInfo.collegeName" />
-          </el-form-item>
-          <el-form-item label="班级" prop="classNumber">
-            <el-input v-model="userInfo.classNumber" />
-          </el-form-item>
-          <el-form-item label="是否签约" prop="collegeName">
+          <el-form-item label="是否签约" prop="isEmployed">
             <el-input v-model="userInfo.isEmployed" />
           </el-form-item>
-          <el-form-item label="签约公司" prop="classNumber">
+          <el-form-item label="签约公司" prop="companyName">
             <el-input v-model="userInfo.companyName" />
+          </el-form-item>
+          <el-form-item label="公司城市" prop="jobCity">
+            <el-input v-model="userInfo.jobCity" />
+          </el-form-item>
+          <el-form-item label="工作职位" prop="jobTitle">
+            <el-input v-model="userInfo.jobTitle" />
+          </el-form-item>
+          <el-form-item label="工资薪资" prop="jobSalary">
+            <el-input v-model="userInfo.jobSalary" />
           </el-form-item>
         </el-form>
 
@@ -140,44 +117,47 @@
 
     <!--  ////////////  详情弹窗  ////////// -->
     <el-dialog
-        v-model="studentDetailDialog"
-        custom-class="user-dialog"
-        title="详情"
-        :show-close="false"
-        :close-on-press-escape="false"
-        :close-on-click-modal="false"
+      v-model="studentDetailDialog"
+      custom-class="user-dialog"
+      title="详情"
+      :show-close="false"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
     >
       <div style="height:60vh;overflow:auto;padding:0 12px;">
-        <el-form ref="StudentForm" :rules="rules" :model="studentDetails" label-width="80px">
+        <el-form ref="StudentForm" :rules="rules" :model="employedDetails" label-width="80px">
           <el-form-item label="学号" prop="stuNumber">
-            <el-input v-model="studentDetails.stuNumber" />
+            <el-input v-model="employedDetails.stuNumber" />
           </el-form-item>
           <el-form-item label="姓名" prop="stuName">
-            <el-input v-model="studentDetails.stuName" />
+            <el-input v-model="employedDetails.stuName" />
           </el-form-item>
           <el-form-item label="性别" prop="stuSex">
-            <el-input v-model="studentDetails.stuSex" />
+            <el-input v-model="employedDetails.stuSex" />
           </el-form-item>
           <el-form-item label="所属学院" prop="collegeName">
-            <el-input v-model="studentDetails.collegeName" />
+            <el-input v-model="employedDetails.collegeName" />
           </el-form-item>
           <el-form-item label="班级" prop="classNumber">
-            <el-input v-model="studentDetails.classNumber" />
+            <el-input v-model="employedDetails.classNumber" />
           </el-form-item>
           <el-form-item label="年级" prop="gradeNumber">
-            <el-input v-model="studentDetails.gradeNumber" />
+            <el-input v-model="employedDetails.gradeNumber" />
           </el-form-item>
-          <el-form-item label="手机号" prop="phone">
-            <el-input v-model="studentDetails.phone" />
+          <el-form-item label="是否签约" prop="isEmployed">
+            <el-input v-model="employedDetails.isEmployed" />
           </el-form-item>
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="studentDetails.email" />
+          <el-form-item label="签约公司" prop="companyName">
+            <el-input v-model="employedDetails.companyName" />
           </el-form-item>
-          <el-form-item label="入学时间" prop="startTime">
-            <el-input v-model="studentDetails.startTime" />
+          <el-form-item label="工作城市" prop="jobCity">
+            <el-input v-model="employedDetails.jobCity" />
           </el-form-item>
-          <el-form-item label="毕业时间" prop="endTime">
-            <el-input v-model="studentDetails.endTime" />
+          <el-form-item label="工作职位" prop="jobTitle">
+            <el-input v-model="employedDetails.jobTitle" />
+          </el-form-item>
+          <el-form-item label="工作薪资" prop="jobSalary">
+            <el-input v-model="employedDetails.jobSalary" />
           </el-form-item>
         </el-form>
 
@@ -206,7 +186,12 @@ import {
   register,
   deleteUser,
 } from '@/api/user'
-import { deleteStudent, getColleges, getDetailByStuNumber, getStudentList, setStudentInfo } from '@/api/student'
+import {
+  deleteStudent,
+  getDetailByStuNumber, getEmployedDetails,
+  getEmployedList, setEmployedDetails,
+  setStudentInfo,
+} from '@/api/student'
 import { getAuthorityList } from '@/api/authority'
 import CustomPic from '@/components/customPic/index.vue'
 import ChooseImg from '@/components/chooseImg/index.vue'
@@ -243,30 +228,23 @@ const pageSize = ref(10)
 const tableData = ref([])
 const searchInfo = ref({
   stuNumber: '',
-  classNumber: '',
-  collegeNumber: '',
+  isEmployed: '',
 })
 
-const methodOptions = ref([{
-  collegeNumber: '',
-  collegeName: '',
-}])
+const methodOptions = ref([
+  {
+    value: 'Y',
+    label: '是',
+  },
+  {
+    value: 'N',
+    label: '否',
+  },
+])
 
 const onReset = () => {
-  searchInfo.value = {
-    // stuNumber: '',
-    // classNumber: '',
-    // collegeNumber: '',
-  }
+  searchInfo.value = {}
 }
-const getCollegeData = async() => {
-  const res = await getColleges({})
-  if (res.code === 0) {
-    methodOptions.value = res.data
-  }
-  console.log(res.data)
-}
-getCollegeData()
 
 // 搜索
 
@@ -289,7 +267,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getStudentList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
+  const table = await getEmployedList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -344,24 +322,24 @@ const userInfo = ref({
   ID: '',
   stuNumber: '',
   stuName: '',
-  stuSex: '',
-  collegeName: '',
-  classNumber: '',
-  gradeNumber: '',
-  phone: '',
-  email: '',
+  isEmployed: '',
+  companyName: '',
+  jobCity: '',
+  jobTitle: '',
+  jobSalary: '',
 })
-const studentDetails = ref({
+const employedDetails = ref({
   stuNumber: '',
   stuName: '',
   stuSex: '',
   collegeName: '',
   classNumber: '',
   gradeNumber: '',
-  startTime: '',
-  endTime: '',
-  phone: '',
-  email: '',
+  isEmployed: '',
+  companyName: '',
+  jobCity: '',
+  jobTitle: '',
+  jobSalary: '',
 })
 
 const rules = ref({
@@ -388,7 +366,6 @@ const rules = ref({
 })
 const userForm = ref(null)
 const enterAddUserDialog = async() => {
-  // userInfo.value.authorityId = userInfo.value.authorityIds[0]
   userForm.value.validate(async valid => {
     if (valid) {
       const req = {
@@ -403,8 +380,7 @@ const enterAddUserDialog = async() => {
         }
       }
       if (dialogFlag.value === 'edit') {
-        // const res = await setUserInfo(req)
-        const res = await setStudentInfo(req)
+        const res = await setEmployedDetails(req)
         if (res.code === 0) {
           ElMessage({ type: 'success', message: '编辑成功' })
           await getTableData()
@@ -435,36 +411,10 @@ const addUser = () => {
   addUserDialog.value = true
 }
 
-// const tempAuth = {}
-// const changeAuthority = async(row, flag, removeAuth) => {
-//   if (flag) {
-//     if (!removeAuth) {
-//       tempAuth[row.ID] = [...row.authorityIds]
-//     }
-//     return
-//   }
-//   await nextTick()
-//   const res = await setUserAuthorities({
-//     ID: row.ID,
-//     authorityIds: row.authorityIds
-//   })
-//   if (res.code === 0) {
-//     ElMessage({ type: 'success', message: '角色设置成功' })
-//   } else {
-//     if (!removeAuth) {
-//       row.authorityIds = [...tempAuth[row.ID]]
-//       delete tempAuth[row.ID]
-//     } else {
-//       row.authorityIds = [removeAuth, ...row.authorityIds]
-//     }
-//   }
-// }
-
 const openDetails = async(row) => {
   dialogFlag.value = 'details'
-  // searchInfo.value = userInfo.value.stuNumber
-  const res = await getDetailByStuNumber({ stuNumber: row.stuNumber })
-  studentDetails.value = res.data
+  const res = await getEmployedDetails({ stuNumber: row.stuNumber })
+  employedDetails.value = res.data
   studentDetailDialog.value = true
 }
 
@@ -474,21 +424,6 @@ const openEdit = (row) => {
   console.log(row.ID)
   addUserDialog.value = true
 }
-//
-// const switchEnable = async(row) => {
-//   userInfo.value = JSON.parse(JSON.stringify(row))
-//   await nextTick()
-//   const req = {
-//     ...userInfo.value
-//   }
-//   const res = await setUserInfo(req)
-//   if (res.code === 0) {
-//     ElMessage({ type: 'success', message: `${req.enable === 2 ? '禁用' : '启用'}成功` })
-//     await getTableData()
-//     userInfo.value.headerImg = ''
-//     userInfo.value.authorityIds = []
-//   }
-// }
 
 </script>
 

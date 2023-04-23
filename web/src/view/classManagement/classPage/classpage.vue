@@ -5,27 +5,27 @@
         <el-form-item label="班级">
           <el-input placeholder="班级" />
         </el-form-item>
-        <el-form-item label="学号">
-          <el-input placeholder="学号" />
-        </el-form-item>
-        <el-form-item label="是否签约">
-          <el-select clearable placeholder="请选择">
-            <!--            <el-option-->
-            <!--                v-for="item in methodOptions"-->
-            <!--                :key="item.value"-->
-            <!--                :label="`${item.label}(${item.value})`"-->
-            <!--                :value="item.value"-->
-            <!--            />-->
-          </el-select>
-        </el-form-item>
+<!--        <el-form-item label="学号">-->
+<!--          <el-input placeholder="学号" />-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="是否签约">-->
+<!--          <el-select clearable placeholder="请选择">-->
+<!--            <el-option-->
+<!--              v-for="item in methodOptions"-->
+<!--              :key="item.value"-->
+<!--              :label="`${item.label}(${item.value})`"-->
+<!--              :value="item.value"-->
+<!--            />-->
+<!--          </el-select>-->
+<!--        </el-form-item>-->
         <el-form-item label="所属学院">
           <el-select clearable placeholder="请选择">
-            <!--            <el-option-->
-            <!--                v-for="item in methodOptions"-->
-            <!--                :key="item.value"-->
-            <!--                :label="`${item.label}(${item.value})`"-->
-            <!--                :value="item.value"-->
-            <!--            />-->
+            <el-option
+              v-for="item in methodOptions"
+              :key="item.value"
+              :label="`${item.label}(${item.value})`"
+              :value="item.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -39,22 +39,15 @@
         <el-button size="small" type="primary" icon="plus" @click="addUser">新增用户</el-button>
       </div>
       <el-table
-          :data="tableData"
-          row-key="ID"
+        :data="tableData"
+        row-key="ID"
       >
-        <el-table-column align="left" label="头像" min-width="75">
-          <template #default="scope">
-            <CustomPic style="margin-top:8px" :pic-src="scope.row.headerImg" />
-          </template>
-        </el-table-column>
         <el-table-column align="left" label="ID" min-width="50" prop="ID" />
-        <el-table-column align="left" label="用户名(学号)" min-width="150" prop="userName" />
-        <el-table-column align="left" label="昵称(姓名)" min-width="150" prop="nickName" />
         <el-table-column align="left" label="所属学院" min-width="100" prop="college" />
         <el-table-column align="left" label="班级" min-width="100" prop="classNum" />
-        <el-table-column align="left" label="手机号" min-width="180" prop="phone" />
-        <el-table-column align="left" label="邮箱" min-width="180" prop="email" />
-        <el-table-column align="left" label="是否签约" min-width="180" prop="isEmployed" />
+        <el-table-column align="left" label="总人数" min-width="180" prop="totalStu" />
+        <el-table-column align="left" label="已签约人数" min-width="180" prop="employedStu" />
+        <el-table-column align="left" label="签约率" min-width="180" prop="employedPercent" />
         <el-table-column label="操作" min-width="250" fixed="right">
           <template #default="scope">
             <el-button type="primary" link icon="magic-stick" size="small">详情</el-button>
@@ -66,24 +59,24 @@
       </el-table>
       <div class="gva-pagination">
         <el-pagination
-            :current-page="page"
-            :page-size="pageSize"
-            :page-sizes="[10, 30, 50, 100]"
-            :total="total"
-            layout="total, sizes, prev, pager, next, jumper"
-            @current-change="handleCurrentChange"
-            @size-change="handleSizeChange"
+          :current-page="page"
+          :page-size="pageSize"
+          :page-sizes="[10, 30, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
         />
       </div>
     </div>
     <!--    -->
     <el-dialog
-        v-model="addUserDialog"
-        custom-class="user-dialog"
-        title="用户"
-        :show-close="false"
-        :close-on-press-escape="false"
-        :close-on-click-modal="false"
+      v-model="addUserDialog"
+      custom-class="user-dialog"
+      title="用户"
+      :show-close="false"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
     >
       <div style="height:60vh;overflow:auto;padding:0 12px;">
         <el-form ref="userForm" :rules="rules" :model="userInfo" label-width="80px">
@@ -104,20 +97,20 @@
           </el-form-item>
           <el-form-item label="用户角色" prop="authorityId">
             <el-cascader
-                v-model="userInfo.authorityIds"
-                style="width:100%"
-                :options="authOptions"
-                :show-all-levels="false"
-                :props="{ multiple:true,checkStrictly: true,label:'authorityName',value:'authorityId',disabled:'disabled',emitPath:false}"
-                :clearable="false"
+              v-model="userInfo.authorityIds"
+              style="width:100%"
+              :options="authOptions"
+              :show-all-levels="false"
+              :props="{ multiple:true,checkStrictly: true,label:'authorityName',value:'authorityId',disabled:'disabled',emitPath:false}"
+              :clearable="false"
             />
           </el-form-item>
           <el-form-item label="启用" prop="disabled">
             <el-switch
-                v-model="userInfo.enable"
-                inline-prompt
-                :active-value="1"
-                :inactive-value="2"
+              v-model="userInfo.enable"
+              inline-prompt
+              :active-value="1"
+              :inactive-value="2"
             />
           </el-form-item>
           <el-form-item label="头像" label-width="80px">
@@ -241,13 +234,13 @@ initPage()
 
 const resetPasswordFunc = (row) => {
   ElMessageBox.confirm(
-      '是否将此用户密码重置为123456?',
-      '警告',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
+    '是否将此用户密码重置为123456?',
+    '警告',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
   ).then(async() => {
     const res = await resetPassword({
       ID: row.ID,
