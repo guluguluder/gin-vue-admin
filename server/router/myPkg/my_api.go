@@ -13,11 +13,14 @@ func (m *MyApiRouter) InitMyApiRouter(Router *gin.RouterGroup) {
 	myApi := v1.ApiGroupApp.PkgApiGroup.MyApi
 	{
 		// 学生管理
-		MyRouterGroup.POST("v1/students/list/getAll", myApi.GetStudentsList)          // 获取毕业生信息列表
-		MyRouterGroup.POST("v1/students/detail/getByStuNumber", myApi.GetByStuNumber) // 获取学生信息详情
-		MyRouterGroup.POST("v1/students/update/setStudentInfo", myApi.SetStudentInfo) // 编辑学生信息
-		MyRouterGroup.POST("v1/students/delete/deleteStudent", myApi.DeleteStudent)   // 删除学生
-		MyRouterGroup.GET("v1/students/get/getColleges", myApi.GetColleges)           // 获取下拉列表学院
+		MyRouterGroup.POST("v1/students/list/getAll", myApi.GetStudentsList)                   // 获取毕业生信息列表
+		MyRouterGroup.POST("v1/students/detail/getByStuNumber", myApi.GetByStuNumber)          // 获取学生信息详情
+		MyRouterGroup.POST("v1/students/update/setStudentInfo", myApi.SetStudentInfo)          // 编辑学生信息
+		MyRouterGroup.POST("v1/students/delete/deleteStudent", myApi.DeleteStudent)            // 删除学生
+		MyRouterGroup.GET("v1/students/get/getColleges", myApi.GetColleges)                    // 获取下拉列表学院
+		MyRouterGroup.POST("v1/students/get/getEmployedList", myApi.GetEmployedList)           // 获取学生就业信息列表
+		MyRouterGroup.POST("v1/students/details/getEmployedDetails", myApi.GetEmployedDetails) // 获取学生就业详情
+		MyRouterGroup.POST("v1/students/update/setEmployedDetails", myApi.SetEmployedDetails)  // 编辑学生就业信息
 		/*-----------------------------------------------------------------------------------------*/
 		//MyRouterGroup.POST("v1/students/list/getByConditions", myApi.GetStudentsListByConditions) // 根据条件获取毕业生信息列表
 		//MyRouterGroup.POST("v1/students/details/get", myApi.GetStudentsDetails)                   // 查看毕业生就业详情

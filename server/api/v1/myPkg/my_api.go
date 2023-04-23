@@ -104,6 +104,68 @@ func (m *MyApi) GetColleges(c *gin.Context) {
 	}
 }
 
+// 获取学生就业信息列表
+func (m *MyApi) GetEmployedList(c *gin.Context) {
+
+	var reqInfo r.SearchStu
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+
+	Id := utils.GetUserID(c)
+	list, total, err := myApiService.GetEmployedListResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else if total == 0 {
+		response.OkWithMessage("暂无数据", c)
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+		}, "ok", c)
+	}
+}
+
+// 查看毕业生就业详情
+func (m *MyApi) GetEmployedDetails(c *gin.Context) {
+	var reqInfo r.GetStudentsDetails
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	list, err := myApiService.GetEmployedDetailsResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(list, "ok", c)
+}
+
+// 编辑学生就业信息
+func (m *MyApi) SetEmployedDetails(c *gin.Context) {
+	var reqInfo r.UpdEmployReq
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	if reqInfo.IsEmployed == "" {
+		response.OkWithMessage("ok", c)
+		return
+	}
+	err = myApiService.SetEmployedDetailsResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	response.OkWithMessage("编辑成功", c)
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表

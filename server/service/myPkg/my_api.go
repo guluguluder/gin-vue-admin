@@ -189,6 +189,101 @@ func (m *MyApiService) GetCollegesResp(sysId uint) (colleges []response.CollegeL
 	return colleges, nil
 }
 
+// 获取学生就业信息列表
+func (m *MyApiService) GetEmployedListResp(reqInfo r.SearchStu, sysId uint) (list []response.EmployedInfos, total int64, err error) {
+
+	limit := reqInfo.PageSize
+	offset := reqInfo.PageSize * (reqInfo.Page - 1)
+
+	whereStr := ""
+	if reqInfo.StuNumber != "" {
+		whereStr = fmt.Sprintf("%v s.stu_number = '%v' and ", whereStr, reqInfo.StuNumber)
+	}
+	if reqInfo.IsEmployed != "" {
+		whereStr = fmt.Sprintf("%v s.employed = '%v' and ", whereStr, reqInfo.IsEmployed)
+	}
+
+	totalSQL := "select count(*) from students s left join student_jobs sj on sj.stu_number = s.stu_number where " + whereStr + " s.deleted_at is null"
+	err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+
+	sql := "select s.id ID, s.stu_number StuNumber , s.stu_name StuName, case when s.employed = 'Y' then '是' else '否' end as  IsEmployed, sj.company_name CompanyName, sj.job_city JobCity, sj.job_title JobTitle, sj.job_salary JobSalary from students s left join student_jobs sj on sj.stu_number = s.stu_number where " + whereStr + " s.deleted_at is null order by s.id limit ?,? "
+	err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error
+	if err != nil {
+		return list, total, err
+	}
+
+	return list, total, nil
+}
+
+// 查看毕业生就业详情
+func (m *MyApiService) GetEmployedDetailsResp(reqInfo r.GetStudentsDetails, sysId uint) (info response.EmployedDetails, err error) {
+
+	sql := "select s.id ID, s.stu_number StuNumber , s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber, c.college_name CollegeName, s.employed IsEmployed, sj.company_name CompanyName, sj.job_city JobCity, sj.job_title JobTitle, sj.job_salary JobSalary from students s inner join colleges c on c.college_number = s.college_number left join student_jobs sj on sj.stu_number = s.stu_number where s.stu_number = ? and s.deleted_at is null"
+	err = global.GVA_DB.Raw(sql, reqInfo.StuNumber).Scan(&info).Error
+	if err != nil {
+		return info, err
+	}
+	return info, err
+}
+
+// 编辑毕业生就业详情
+func (m *MyApiService) SetEmployedDetailsResp(reqInfo r.UpdEmployReq, sysId uint) (err error) {
+
+	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+
+		var stuNumber string
+		err = global.GVA_DB.Raw("select s.stu_number from students s where s.id = ?", reqInfo.ID).Scan(&stuNumber).Error
+		if err != nil {
+			return err
+		}
+		err = tx.Model(&myPkg.Students{}).Where("stu_number = ?", stuNumber).Update("employed", reqInfo.IsEmployed).Error
+		if err != nil {
+			return err
+		}
+		var stuStr string
+		SQL := "select sj.stu_number  from student_jobs sj where sj.stu_number  = ? "
+		err = tx.Raw(SQL, stuNumber).Scan(&stuStr).Error
+		if err != nil {
+			return err
+		}
+		if stuStr != "" {
+			err = tx.Model(&myPkg.StudentJobs{}).Where("stu_number = ?", reqInfo.StuNumber).Updates(myPkg.StudentJobs{
+				CompanyName: reqInfo.CompanyName,
+				JobCity:     reqInfo.JobCity,
+				JobTitle:    reqInfo.JobTitle,
+				JobSalary:   reqInfo.JobSalary,
+			}).Error
+			if err != nil {
+				return err
+			}
+		} else if stuStr == "" {
+			err = tx.Create(&myPkg.StudentJobs{
+				GVA_MODEL:   global.GVA_MODEL{},
+				StuNumber:   stuNumber,
+				CompanyName: reqInfo.CompanyName,
+				JobCity:     reqInfo.JobCity,
+				JobTitle:    reqInfo.JobTitle,
+				JobSalary:   reqInfo.JobSalary,
+			}).Error
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表
