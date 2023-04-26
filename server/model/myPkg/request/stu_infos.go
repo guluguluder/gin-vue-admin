@@ -43,12 +43,3 @@ type UpdEmployReq struct {
 }
 
 /*================================================================*/
-
-type UpdStudentsInfos struct {
-	StudentName string `json:"studentName"`
-	CollegeName string `json:"collegeName"`
-	ClassNum    string `json:"classNum"`
-	Telephone   string `json:"telephone"`
-	Email       string `json:"email"`
-	IsEmployed  string `json:"isEmployed"`
-}

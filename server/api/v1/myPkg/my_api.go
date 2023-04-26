@@ -120,6 +120,7 @@ func (m *MyApi) GetEmployedList(c *gin.Context) {
 		return
 	} else if total == 0 {
 		response.OkWithMessage("暂无数据", c)
+		return
 	} else {
 		response.OkWithDetailed(response.PageResult{
 			List:     list,
@@ -166,6 +167,55 @@ func (m *MyApi) SetEmployedDetails(c *gin.Context) {
 	response.OkWithMessage("编辑成功", c)
 }
 
+// 获取班级列表
+func (m *MyApi) GetClassList(c *gin.Context) {
+	var reqInfo r.SearchClass
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	list, total, err := myApiService.GetClassListResp(reqInfo, Id)
+	if err != nil {
+		return
+	} else if total == 0 {
+		response.OkWithMessage("暂无数据", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+		}, "ok", c)
+	}
+}
+
+//获取班级就业信息详情
+func (m *MyApi) GetClassEmployedDetails(c *gin.Context) {
+
+	var reqInfo r.SearchClassDetails
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	list, total, err := myApiService.GetClassEmployedDetailsResp(reqInfo, Id)
+	if err != nil {
+		return
+	} else if total == 0 {
+		response.OkWithMessage("暂无数据", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+		}, "ok", c)
+	}
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表
@@ -192,19 +242,6 @@ func (m *MyApi) SetEmployedDetails(c *gin.Context) {
 //		}, "ok", c)
 //	}
 //}
-
-// 编辑毕业生信息
-func (m *MyApi) UpdStudentsInfos(c *gin.Context) {
-
-	var reqInfo r.UpdStudentsInfos
-	err := c.ShouldBindJSON(&reqInfo)
-	if err != nil {
-		return
-	}
-	Id := utils.GetUserID(c)
-	myApiService.UpdStudentsInfosResp(reqInfo, Id)
-	response.Ok(c)
-}
 
 // 删除毕业生信息
 func (m *MyApi) DeleteStudentsInfos(c *gin.Context) {

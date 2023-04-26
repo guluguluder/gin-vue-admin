@@ -21,10 +21,15 @@ func (m *MyApiRouter) InitMyApiRouter(Router *gin.RouterGroup) {
 		MyRouterGroup.POST("v1/students/get/getEmployedList", myApi.GetEmployedList)           // 获取学生就业信息列表
 		MyRouterGroup.POST("v1/students/details/getEmployedDetails", myApi.GetEmployedDetails) // 获取学生就业详情
 		MyRouterGroup.POST("v1/students/update/setEmployedDetails", myApi.SetEmployedDetails)  // 编辑学生就业信息
+
+		// 班级管理
+		MyRouterGroup.POST("v1/class/get/getClassList", myApi.GetClassList)                       // 获取班级就业信息列表
+		MyRouterGroup.POST("v1/class/get/getClassEmployedDetails", myApi.GetClassEmployedDetails) // 获取班级就业信息详情
+
 		/*-----------------------------------------------------------------------------------------*/
 		//MyRouterGroup.POST("v1/students/list/getByConditions", myApi.GetStudentsListByConditions) // 根据条件获取毕业生信息列表
 		//MyRouterGroup.POST("v1/students/details/get", myApi.GetStudentsDetails)                   // 查看毕业生就业详情
-		MyRouterGroup.POST("v1/students/update", myApi.UpdStudentsInfos)      // 编辑毕业生信息
+		//MyRouterGroup.POST("v1/students/update", myApi.UpdStudentsInfos)      // 编辑毕业生信息
 		MyRouterGroup.DELETE("v1/students/delete", myApi.DeleteStudentsInfos) // 删除毕业生信息
 		// 就业信息统计
 		MyRouterGroup.POST("v1/college/employment/list/getAll", myApi.GetEmploymentInfosList)                      // 获取各学院的就业情况列表

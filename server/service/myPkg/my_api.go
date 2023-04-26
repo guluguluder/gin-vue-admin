@@ -235,6 +235,13 @@ func (m *MyApiService) GetEmployedDetailsResp(reqInfo r.GetStudentsDetails, sysI
 // 编辑毕业生就业详情
 func (m *MyApiService) SetEmployedDetailsResp(reqInfo r.UpdEmployReq, sysId uint) (err error) {
 
+	if reqInfo.IsEmployed == "是" {
+		reqInfo.IsEmployed = "Y"
+	}
+	if reqInfo.IsEmployed == "否" {
+		reqInfo.IsEmployed = "N"
+	}
+
 	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 
 		var stuNumber string
@@ -284,6 +291,57 @@ func (m *MyApiService) SetEmployedDetailsResp(reqInfo r.UpdEmployReq, sysId uint
 	return nil
 }
 
+//获取班级列表
+func (m *MyApiService) GetClassListResp(reqInfo r.SearchClass, sysId uint) (list []response.ClassList, total int64, err error) {
+	limit := reqInfo.PageSize
+	offset := reqInfo.PageSize * (reqInfo.Page - 1)
+
+	whereStr := ""
+	if reqInfo.ClassNumber != "" {
+		whereStr = fmt.Sprintf("%v c.class_number = '%v' and ", whereStr, reqInfo.ClassNumber)
+	}
+	if reqInfo.CollegeNumber != "" {
+		whereStr = fmt.Sprintf("%v c.college_number = '%v' and ", whereStr, reqInfo.CollegeNumber)
+	}
+
+	totalSQL := "select count(*) from classes c inner join colleges c2 on c2.college_number = c.college_number left join( select count(s.id) employed_stu, s.class_number class_number from students s where s.employed = 'Y' group by s.class_number) t on t.class_number = c.class_number where " + whereStr + " c.deleted_at is null order by c.id "
+	err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+	sql := "select c.id ID, c.class_number ClassNumber, c.college_number CollegeNumber, c.total_stu TotalStu, c2.college_name CollegeName, t.employed_stu EmployedSum ,concat( round(t.employed_stu/c.total_stu*100,2) ,'%') EmployedPercent from classes c inner join colleges c2 on c2.college_number = c.college_number left join( select count(s.id) employed_stu, s.class_number class_number from students s where s.employed = 'Y' group by s.class_number) t on t.class_number = c.class_number where " + whereStr + " c.deleted_at is null order by c.id limit ?,?"
+	err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error
+	if err != nil {
+		return list, total, err
+	}
+
+	return list, total, nil
+}
+
+//获取班级就业信息详情
+func (m *MyApiService) GetClassEmployedDetailsResp(reqInfo r.SearchClassDetails, sysId uint) (list []response.ClassDetails, total int64, err error) {
+	limit := reqInfo.PageSize
+	offset := reqInfo.PageSize * (reqInfo.Page - 1)
+
+	totalSQL := " select count(*) from students s left join student_jobs sj on sj.stu_number = s.stu_number where s.class_number = ? and s.deleted_at is null"
+	err = global.GVA_DB.Raw(totalSQL, reqInfo.ClassNumber).Scan(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+	sql := " select s.stu_number StuNumber, s.stu_name StuName , s.class_number ClassNumber, s.employed Employed, sj.company_name CompanyName from students s left join student_jobs sj on sj.stu_number = s.stu_number where s.class_number = ? and s.deleted_at is null limit ?,? "
+	err = global.GVA_DB.Raw(sql, reqInfo.ClassNumber, offset, limit).Scan(&list).Error
+	if err != nil {
+		return list, total, err
+	}
+	return list, total, nil
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表
@@ -313,19 +371,6 @@ func (m *MyApiService) SetEmployedDetailsResp(reqInfo r.UpdEmployReq, sysId uint
 //	fmt.Println("hello World")
 //	return list, total, nil
 //}
-
-// 编辑毕业生信息
-func (m *MyApiService) UpdStudentsInfosResp(reqInfo r.UpdStudentsInfos, sysId uint) {
-
-	err := global.GVA_DB.Transaction(func(tx *gorm.DB) error {
-
-		return nil
-	})
-	if err != nil {
-		return
-	}
-	fmt.Println("hello World")
-}
 
 // 删除毕业生信息
 func (m *MyApiService) DeleteStudentsInfosResp() {
