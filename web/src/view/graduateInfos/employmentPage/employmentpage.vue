@@ -389,8 +389,6 @@ const closeStudentDetailDialog = () => {
 const addUserDialog = ref(false)
 const closeAddUserDialog = () => {
   userForm.value.resetFields()
-  userInfo.value.headerImg = ''
-  userInfo.value.authorityIds = []
   addUserDialog.value = false
 }
 
