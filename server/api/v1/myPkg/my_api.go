@@ -216,6 +216,85 @@ func (m *MyApi) GetClassEmployedDetails(c *gin.Context) {
 	}
 }
 
+//获取招聘会信息列表
+func (m *MyApi) GetJobFairList(c *gin.Context) {
+	var reqInfo r.SearchJobFairs
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	list, total, err := myApiService.GetJobFairListResp(reqInfo, Id)
+	if err != nil {
+		return
+	} else if total == 0 {
+		response.OkWithMessage("暂无数据", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+		}, "ok", c)
+	}
+}
+
+//删除招聘会信息
+func (m *MyApi) DeleteJobFair(c *gin.Context) {
+	var reqInfo r.SearchJobFairs
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	err = myApiService.DeleteJobFair(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.OkWithMessage("删除成功", c)
+	}
+}
+
+//添加招聘会信息
+func (m *MyApi) AddJobFair(c *gin.Context) {
+	var reqInfo r.AddJobFair
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	err = myApiService.AddJobFairResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.OkWithMessage("添加成功", c)
+	}
+}
+
+//编辑招聘会信息
+func (m *MyApi) SetJobFair(c *gin.Context) {
+	var reqInfo r.AddJobFair
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	err = myApiService.SetJobFairResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.OkWithMessage("编辑成功", c)
+	}
+
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表

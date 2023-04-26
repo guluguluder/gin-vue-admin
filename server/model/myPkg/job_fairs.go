@@ -5,6 +5,7 @@ import "github.com/flipped-aurora/gin-vue-admin/server/global"
 // JobFairs 招聘信息表
 type JobFairs struct {
 	global.GVA_MODEL
+	NoticeId    uint   `json:"notice_id" gorm:"notice_id" db:"notice_id"`          // 公告Id
 	CompanyName string `json:"company_name" gorm:"company_name" db:"company_name"` // 公司名称
 	City        string `json:"city" gorm:"city" db:"city"`                         // 工作城市
 	Salary      string `json:"salary" gorm:"salary" db:"salary"`                   // 薪水

@@ -342,6 +342,75 @@ func (m *MyApiService) GetClassEmployedDetailsResp(reqInfo r.SearchClassDetails,
 	return list, total, nil
 }
 
+//获取招聘会信息列表
+func (m *MyApiService) GetJobFairListResp(reqInfo r.SearchJobFairs, sysId uint) (list []response.JobFairList, total int64, err error) {
+	limit := reqInfo.PageSize
+	offset := reqInfo.PageSize * (reqInfo.Page - 1)
+
+	totalSQL := " select count(*) from job_fairs jf where jf.deleted_at is null"
+	err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+	SQL := "select jf.id ID, jf.company_name CompanyName , jf.city City , jf.salary Salary , jf.total_stu TotalStu , jf.telephone Telephone , jf.email Email, jf.address Address from job_fairs jf where jf.deleted_at is null limit ?,?"
+	err = global.GVA_DB.Raw(SQL, offset, limit).Scan(&list).Error
+	if err != nil {
+		return list, total, err
+	}
+	return list, total, nil
+}
+
+//删除招聘会信息
+func (m *MyApiService) DeleteJobFair(reqInfo r.SearchJobFairs, sysId uint) (err error) {
+
+	err = global.GVA_DB.Model(&myPkg.JobFairs{}).Where("id = ?", reqInfo.ID).Update("deleted_at", time.Now()).Error
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (m *MyApiService) AddJobFairResp(reqInfo r.AddJobFair, sysId uint) (err error) {
+
+	err = global.GVA_DB.Create(&myPkg.JobFairs{
+		GVA_MODEL:   global.GVA_MODEL{},
+		CompanyName: reqInfo.CompanyName,
+		City:        reqInfo.City,
+		Salary:      reqInfo.Salary,
+		TotalStu:    reqInfo.TotalStu,
+		Telephone:   reqInfo.Telephone,
+		Email:       reqInfo.Email,
+		Address:     reqInfo.Address,
+	}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (m *MyApiService) SetJobFairResp(reqInfo r.AddJobFair, sysId uint) (err error) {
+
+	err = global.GVA_DB.Model(&myPkg.JobFairs{}).Where("id = ?", reqInfo.ID).Updates(myPkg.JobFairs{
+		//NoticeId:    reqInfo.NoticeId,
+		CompanyName: reqInfo.CompanyName,
+		City:        reqInfo.City,
+		Salary:      reqInfo.Salary,
+		TotalStu:    reqInfo.TotalStu,
+		Telephone:   reqInfo.Telephone,
+		Email:       reqInfo.Email,
+		Address:     reqInfo.Address,
+	}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表
