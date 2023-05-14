@@ -10,6 +10,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -375,13 +376,16 @@ func (m *MyApiService) DeleteJobFair(reqInfo r.SearchJobFairs, sysId uint) (err 
 }
 
 func (m *MyApiService) AddJobFairResp(reqInfo r.AddJobFair, sysId uint) (err error) {
-
+	parseInt, err := strconv.ParseInt(reqInfo.TotalStu, 10, 64)
+	if err != nil {
+		return err
+	}
 	err = global.GVA_DB.Create(&myPkg.JobFairs{
 		GVA_MODEL:   global.GVA_MODEL{},
 		CompanyName: reqInfo.CompanyName,
 		City:        reqInfo.City,
 		Salary:      reqInfo.Salary,
-		TotalStu:    reqInfo.TotalStu,
+		TotalStu:    parseInt,
 		Telephone:   reqInfo.Telephone,
 		Email:       reqInfo.Email,
 		Address:     reqInfo.Address,
@@ -394,17 +398,98 @@ func (m *MyApiService) AddJobFairResp(reqInfo r.AddJobFair, sysId uint) (err err
 }
 
 func (m *MyApiService) SetJobFairResp(reqInfo r.AddJobFair, sysId uint) (err error) {
-
+	parseInt, err := strconv.ParseInt(reqInfo.TotalStu, 10, 64)
+	if err != nil {
+		return err
+	}
 	err = global.GVA_DB.Model(&myPkg.JobFairs{}).Where("id = ?", reqInfo.ID).Updates(myPkg.JobFairs{
 		//NoticeId:    reqInfo.NoticeId,
 		CompanyName: reqInfo.CompanyName,
 		City:        reqInfo.City,
 		Salary:      reqInfo.Salary,
-		TotalStu:    reqInfo.TotalStu,
+		TotalStu:    parseInt,
 		Telephone:   reqInfo.Telephone,
 		Email:       reqInfo.Email,
 		Address:     reqInfo.Address,
 	}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//获取公告列表
+func (m *MyApiService) GetContentListResp(reqInfo r.SearchContent, sysId uint) (list []response.ContentList, total int64, err error) {
+	limit := reqInfo.PageSize
+	offset := reqInfo.PageSize * (reqInfo.Page - 1)
+
+	totalSQL := " select count(*) from notices n  where n.deleted_at is null"
+	err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+	SQL := "SELECT n.id ID,n.content Content,n.author_number Author ,date_format(n.updated_at, \"%Y-%m-%d %H:%i:%s\") UpdateTime FROM notices n where n.deleted_at is null order by n.updated_at desc limit ?,?"
+	err = global.GVA_DB.Raw(SQL, offset, limit).Scan(&list).Error
+	if err != nil {
+		return list, total, err
+	}
+	return list, total, nil
+}
+
+func (m *MyApiService) SetContentResp(reqInfo r.UpdContent, sysId uint) (err error) {
+
+	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		var sysUser system.SysUser
+		err = global.GVA_DB.Select("username").Where("id = ? and deleted_at is null", sysId).Find(&sysUser).Error
+		if err != nil {
+			return err
+		}
+		err = tx.Where("id = ?", reqInfo.ID).Updates(&myPkg.Notices{
+			Content:      reqInfo.Content,
+			AuthorNumber: sysUser.Username,
+		}).Error
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (m *MyApiService) AddContentResp(reqInfo r.AddContent, sysId uint) (err error) {
+
+	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		var sysUser system.SysUser
+		err = global.GVA_DB.Select("username").Where("id = ? and deleted_at is null", sysId).Find(&sysUser).Error
+		if err != nil {
+			return err
+		}
+		err = tx.Create(&myPkg.Notices{
+			Content:      reqInfo.Content,
+			AuthorNumber: sysUser.Username,
+		}).Error
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (m *MyApiService) DelContentResp(reqInfo r.DelContent, sysId uint) error {
+	var user system.SysUser
+	err := global.GVA_DB.Select("username").Where("id = ?", sysId).Find(&user).Error
+	if err != nil {
+		return err
+	}
+	err = global.GVA_DB.Model(&myPkg.Notices{}).Where("id = ?", reqInfo.ID).Update("author_number", user.Username).Update("deleted_at", time.Now()).Error
 	if err != nil {
 		return err
 	}
@@ -447,14 +532,14 @@ func (m *MyApiService) DeleteStudentsInfosResp() {
 }
 
 // 获取各学院的就业情况列表
-func (m *MyApiService) GetEmploymentInfosListResp(reqInfo request.PageInfo, sysId uint) (list []response.StuEmploymentInfos, total int64, err error) {
+func (m *MyApiService) GetEmploymentInfosResp(reqInfo request.PageInfo, sysId uint) (list []response.StuEmploymentInfos, total int64, err error) {
 
 	//TODO: 校验身份权限
 
 	limit := reqInfo.PageSize
 	offset := reqInfo.PageSize * (reqInfo.Page - 1)
 
-	totalSQL := "select count(*) from( select scci.college_num , scci.college_name , ifnull(sum(scci.total_students),0) TotalStudents , ifnull(sum(scci.employed_sum),0) EmployedSum, ifnull(sum(scci.unemployed_sum),0) UnemployedSum, case when ifnull(sum(scci.total_students),0) != 0 then concat(sum(scci.employed_sum)/sum(scci.total_students)*100,'%') else '0' end AS Percentage from sys_class_college_infos scci group by scci.college_num, scci.college_name) t "
+	totalSQL := "select count(*) from  (select distinct s.college_number  from students s ) t "
 	err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error
 	if err != nil {
 		return list, 0, err
@@ -463,10 +548,21 @@ func (m *MyApiService) GetEmploymentInfosListResp(reqInfo request.PageInfo, sysI
 		return list, 0, nil
 	}
 
-	sql := "select scci.college_num CollegeNum, scci.college_name CollegeName, ifnull(sum(scci.total_students),0) TotalStudents , ifnull(sum(scci.employed_sum),0) EmployedSum, ifnull(sum(scci.unemployed_sum),0) UnemployedSum, case when ifnull(sum(scci.total_students),0) != 0 then concat(sum(scci.employed_sum)/sum(scci.total_students)*100,'%') else '0' end AS Percentage from sys_class_college_infos scci group by scci.college_num, scci.college_name limit ?,?"
+	sql := "select s.college_number CollegeNum,c.college_name CollegeName , count(*) TotalStudents from students s left join colleges c on c.college_number = s.college_number  group by s.college_number,c.college_name  limit ?,?"
 	err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error
 	if err != nil {
 		return list, total, err
+	}
+	tmp1 := response.StuEmploymentInfos{}
+	tmp2 := response.StuEmploymentInfos{}
+	for i := 0; i < len(list); i++ {
+		sql1 := "select s.college_number CollegeNum, count(*) EmployedSum from students s where s.employed = 'Y' and s.college_number = ?  group by s.college_number "
+		err = global.GVA_DB.Raw(sql1, list[i].CollegeNum).Scan(&tmp1).Error
+		list[i].EmployedSum = tmp1.EmployedSum
+		sql2 := "select s.college_number CollegeNum, count(*) UnemployedSum from students s where s.employed = 'N' and s.college_number = ?  group by s.college_number "
+		err = global.GVA_DB.Raw(sql2, list[i].CollegeNum).Scan(&tmp2).Error
+		list[i].UnemployedSum = tmp2.UnemployedSum
+		list[i].Percentage = strconv.FormatInt((list[i].EmployedSum*100)/(list[i].TotalStudents), 10) + "%"
 	}
 	return list, total, nil
 }

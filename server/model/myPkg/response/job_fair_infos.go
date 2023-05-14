@@ -10,3 +10,9 @@ type JobFairList struct {
 	Email       string `json:"email"`
 	Address     string `json:"address"`
 }
+type ContentList struct {
+	ID         string `json:"ID"`
+	Author     string `json:"author"`
+	Content    string `json:"content"`
+	UpdateTime string `json:"updateTime"`
+}

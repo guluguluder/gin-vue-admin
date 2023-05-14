@@ -295,6 +295,106 @@ func (m *MyApi) SetJobFair(c *gin.Context) {
 
 }
 
+//获取公告列表
+func (m *MyApi) GetContentList(c *gin.Context) {
+	var reqInfo r.SearchContent
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	list, total, err := myApiService.GetContentListResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else if total == 0 {
+		response.OkWithMessage("暂无数据", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+		}, "ok", c)
+	}
+
+}
+
+func (m *MyApi) SetContent(c *gin.Context) {
+	var reqInfo r.UpdContent
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	err = myApiService.SetContentResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.OkWithMessage("编辑成功", c)
+	}
+}
+func (m *MyApi) AddContent(c *gin.Context) {
+	var reqInfo r.AddContent
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	err = myApiService.AddContentResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.OkWithMessage("编辑成功", c)
+	}
+}
+func (m *MyApi) DeleteContent(c *gin.Context) {
+	var reqInfo r.DelContent
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	err = myApiService.DelContentResp(reqInfo, Id)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.OkWithMessage("编辑成功", c)
+	}
+}
+
+// 获取各学院的就业情况列表
+func (m *MyApi) GetEmploymentInfos(c *gin.Context) {
+	var reqInfo request.PageInfo
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	infos, total, err := myApiService.GetEmploymentInfosResp(reqInfo, Id)
+	if err != nil {
+		return
+	} else if total == 0 {
+		response.OkWithMessage("there is no data", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+			Total:    total,
+			List:     infos,
+		}, "ok", c)
+	}
+}
+
 /*-----------------------------------------------------------------------*/
 
 // 根据条件获取毕业生信息列表
@@ -326,30 +426,6 @@ func (m *MyApi) SetJobFair(c *gin.Context) {
 func (m *MyApi) DeleteStudentsInfos(c *gin.Context) {
 	myApiService.DeleteStudentsInfosResp()
 	response.Ok(c)
-}
-
-// 获取各学院的就业情况列表
-func (m *MyApi) GetEmploymentInfosList(c *gin.Context) {
-	var reqInfo request.PageInfo
-	err := c.ShouldBindJSON(&reqInfo)
-	if err != nil {
-		return
-	}
-	Id := utils.GetUserID(c)
-	infos, total, err := myApiService.GetEmploymentInfosListResp(reqInfo, Id)
-	if err != nil {
-		return
-	} else if total == 0 {
-		response.OkWithMessage("there is no data", c)
-		return
-	} else {
-		response.OkWithDetailed(response.PageResult{
-			Page:     reqInfo.Page,
-			PageSize: reqInfo.PageSize,
-			Total:    total,
-			List:     infos,
-		}, "ok", c)
-	}
 }
 
 // 根据条件获取各学院的就业信息
