@@ -56,3 +56,11 @@ export const setEmployedDetails = (data) => {
     data: data
   })
 }
+
+export const getEmploymentInfos = (data) => {
+  return service({
+    url: '/myapp/v1/infos/getEmploymentInfos',
+    method: 'post',
+    data: data
+  })
+}

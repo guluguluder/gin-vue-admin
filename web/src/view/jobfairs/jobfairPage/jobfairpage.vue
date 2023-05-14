@@ -20,7 +20,7 @@
           <template #default="scope">
             <el-button type="primary" link icon="edit" size="small" @click="openEdit(scope.row)">编辑</el-button>
             <el-popover v-model="scope.row.visible" placement="top" width="160">
-              <p>确定要删除此用户吗</p>
+              <p>确定要删除吗</p>
               <div style="text-align: right; margin-top: 8px;">
                 <el-button size="small" type="primary" link @click="scope.row.visible = false">取消</el-button>
                 <el-button type="primary" size="small" @click="deleteUserFunc(scope.row)">确定</el-button>
@@ -97,18 +97,6 @@ export default {
 </script>
 
 <script setup>
-
-import {
-  getUserList,
-  setUserAuthorities,
-  register,
-  deleteUser
-} from '@/api/user'
-
-import { getAuthorityList } from '@/api/authority'
-import CustomPic from '@/components/customPic/index.vue'
-import ChooseImg from '@/components/chooseImg/index.vue'
-import { setUserInfo, resetPassword } from '@/api/user.js'
 
 import { nextTick, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -205,10 +193,11 @@ const deleteUserFunc = async(row) => {
 // 弹窗相关
 const userInfo = ref({
   ID: '',
+  noticeId: '',
   companyName: '',
   city: '',
   salary: '',
-  totalStu: '',
+  totalStu: 0,
   telephone: '',
   email: '',
   address: '',

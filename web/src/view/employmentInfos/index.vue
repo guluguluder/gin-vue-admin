@@ -16,19 +16,11 @@
     </div>
     <!--    <warning-bar title="注：右上角头像下拉可切换角色" />-->
     <div class="gva-table-box">
-      <!--      <div class="gva-btn-list">-->
-      <!--        <el-button size="small" type="primary" icon="plus" @click="addUser">新增用户</el-button>-->
-      <!--      </div>-->
       <el-table
         :data="tableData"
         row-key="ID"
       >
-<!--        <el-table-column align="left" label="头像" min-width="75">-->
-<!--          <template #default="scope">-->
-<!--            <CustomPic style="margin-top:8px" :pic-src="scope.row.headerImg" />-->
-<!--          </template>-->
-<!--        </el-table-column>-->
-        <el-table-column align="left" label="ID" min-width="50" prop="ID" />
+<!--        <el-table-column align="left" label="ID" min-width="50" prop="ID" />-->
         <el-table-column align="left" label="学院编号" min-width="100" prop="collegeNum" />
         <el-table-column align="left" label="学院名称" min-width="100" prop="collegeName" />
         <el-table-column align="left" label="总人数" min-width="100" prop="totalStudents" />
@@ -144,6 +136,7 @@ import { setUserInfo, resetPassword } from '@/api/user.js'
 
 import { nextTick, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getEmploymentInfos } from '@/api/student'
 const path = ref(import.meta.env.VITE_BASE_API + '/')
 // 初始化相关
 const setAuthorityOptions = (AuthorityData, optionsData) => {
@@ -184,7 +177,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getUserList({ page: page.value, pageSize: pageSize.value })
+  const table = await getEmploymentInfos({ page: page.value, pageSize: pageSize.value })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total

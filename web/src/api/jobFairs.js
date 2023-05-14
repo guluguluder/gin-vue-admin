@@ -17,14 +17,14 @@ export const deleteJobFair = (data) => {
 export const addJobFair = (data) => {
   return service({
     url: '/myapp/v1/jobFairs/add/addJobFair',
-    method: 'delete',
+    method: 'post',
     data: data
   })
 }
 export const setJobFair = (data) => {
   return service({
     url: '/myapp/v1/jobFairs/upd/setJobFair',
-    method: 'delete',
+    method: 'post',
     data: data
   })
 }
