@@ -33,3 +33,12 @@ type AddContent struct {
 type DelContent struct {
 	ID string `json:"ID"`
 }
+type AddComment struct {
+	ID          string `json:"Id"`
+	Comment     string `json:"comment"`
+	CompanyName string `json:"companyName"`
+}
+type SearchComment struct {
+	request.PageInfo
+	CompanyName string `json:"companyName"`
+}

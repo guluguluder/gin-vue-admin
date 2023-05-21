@@ -11,3 +11,7 @@ type SearchClassDetails struct {
 	request.PageInfo
 	ClassNumber string `json:"classNumber"`
 }
+type SearchCollegeDetails struct {
+	request.PageInfo
+	CollegeNumber string `json:"collegeNumber"`
+}

@@ -1,7 +1,6 @@
 package myPkg
 
 import (
-	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	r "github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
@@ -19,7 +18,8 @@ func (m *MyApi) GetStudentsList(c *gin.Context) {
 		return
 	}
 	Id := utils.GetUserID(c)
-	lists, total, err := myApiService.GetStudentsListResp(reqInfo, Id)
+	AuthorityId := utils.GetUserAuthorityId(c)
+	lists, total, err := myApiService.GetStudentsListResp(reqInfo, Id, AuthorityId)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -114,7 +114,8 @@ func (m *MyApi) GetEmployedList(c *gin.Context) {
 	}
 
 	Id := utils.GetUserID(c)
-	list, total, err := myApiService.GetEmployedListResp(reqInfo, Id)
+	AuthorityId := utils.GetUserAuthorityId(c)
+	list, total, err := myApiService.GetEmployedListResp(reqInfo, Id, AuthorityId)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -295,6 +296,52 @@ func (m *MyApi) SetJobFair(c *gin.Context) {
 
 }
 
+//评价
+func (m *MyApi) AddCommentInfo(c *gin.Context) {
+	var reqInfo r.AddComment
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	AuthorityId := utils.GetUserAuthorityId(c)
+	err = myApiService.AddCommentInfoResp(reqInfo, Id, AuthorityId)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.OkWithMessage("编辑成功", c)
+	}
+}
+
+//评价列表
+func (m *MyApi) GetCommentList(c *gin.Context) {
+	var reqInfo r.SearchComment
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	AuthorityId := utils.GetUserAuthorityId(c)
+	list, total, err := myApiService.GetCommentListResp(reqInfo, Id, AuthorityId)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else if total == 0 {
+		response.OkWithMessage("暂无数据", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			List:     list,
+			Total:    total,
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+		}, "ok", c)
+	}
+}
+
 //获取公告列表
 func (m *MyApi) GetContentList(c *gin.Context) {
 	var reqInfo r.SearchContent
@@ -373,13 +420,37 @@ func (m *MyApi) DeleteContent(c *gin.Context) {
 
 // 获取各学院的就业情况列表
 func (m *MyApi) GetEmploymentInfos(c *gin.Context) {
-	var reqInfo request.PageInfo
+	var reqInfo r.SearchCollegeDetails
 	err := c.ShouldBindJSON(&reqInfo)
 	if err != nil {
 		return
 	}
 	Id := utils.GetUserID(c)
 	infos, total, err := myApiService.GetEmploymentInfosResp(reqInfo, Id)
+	if err != nil {
+		return
+	} else if total == 0 {
+		response.OkWithMessage("there is no data", c)
+		return
+	} else {
+		response.OkWithDetailed(response.PageResult{
+			Page:     reqInfo.Page,
+			PageSize: reqInfo.PageSize,
+			Total:    total,
+			List:     infos,
+		}, "ok", c)
+	}
+}
+
+// 获取各学院的就业情况列表
+func (m *MyApi) GetCollegeEmployedList(c *gin.Context) {
+	var reqInfo r.SearchCollegeDetails
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		return
+	}
+	Id := utils.GetUserID(c)
+	infos, total, err := myApiService.GetCollegeEmployedListResp(reqInfo, Id)
 	if err != nil {
 		return
 	} else if total == 0 {

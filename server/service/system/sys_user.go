@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	uuid "github.com/satori/go.uuid"
@@ -27,7 +28,40 @@ func (userService *UserService) Register(u system.SysUser) (userInter system.Sys
 	// 否则 附加uuid 密码hash加密 注册
 	u.Password = utils.BcryptHash(u.Password)
 	u.UUID = uuid.NewV4()
-	err = global.GVA_DB.Create(&u).Error
+	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+
+		err = tx.Create(&u).Error
+
+		if u.AuthorityId == 2019 {
+			err = tx.Create(&myPkg.Students{
+				GVA_MODEL: global.GVA_MODEL{},
+				SysStuId:  int64(u.ID),
+				StuNumber: u.Username,
+				StuName:   u.NickName,
+				StuSex:    "男",
+				Employed:  "0",
+			}).Error
+			if err != nil {
+				return err
+			}
+		} else if u.AuthorityId == 10001 {
+			err = tx.Create(&myPkg.Teachers{
+				GVA_MODEL:    global.GVA_MODEL{},
+				SysUserId:    int64(u.ID),
+				WorkerNumber: u.Username,
+				WorkerName:   u.NickName,
+				WorkerSex:    "男",
+			}).Error
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return u, err
+	}
+
 	return u, err
 }
 

@@ -1,7 +1,7 @@
 package response
 
 type StuEmploymentInfos struct {
-	CollegeNum    string `json:"collegeNum"`
+	CollegeNumber string `json:"collegeNumber"`
 	CollegeName   string `json:"collegeName"`
 	TotalStudents int64  `json:"totalStudents"`
 	EmployedSum   int64  `json:"employedSum"`

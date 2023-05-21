@@ -16,3 +16,10 @@ type ContentList struct {
 	Content    string `json:"content"`
 	UpdateTime string `json:"updateTime"`
 }
+type CommentList struct {
+	ID             string `json:"ID"`
+	CompanyName    string `json:"companyName"`
+	StudentComment string `json:"studentComment"`
+	TeacherComment string `json:"teacherComment"`
+	CreatedAt      string `json:"createdAt"`
+}

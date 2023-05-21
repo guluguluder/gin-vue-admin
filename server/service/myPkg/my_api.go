@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg"
 	r "github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/myPkg/response"
@@ -18,9 +17,17 @@ type MyApiService struct {
 }
 
 //获取毕业生信息列表
-func (m *MyApiService) GetStudentsListResp(reqInfo r.SearchStu, sysId uint) (list []response.StudentsList, total int64, err error) {
+func (m *MyApiService) GetStudentsListResp(reqInfo r.SearchStu, sysId uint, AuthorityId uint) (list []response.StudentsList, total int64, err error) {
 
 	// TODO:身份权限校验
+	if AuthorityId == 2019 {
+		sql := " select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.sys_stu_id = ? and s.deleted_at is null"
+		err = global.GVA_DB.Raw(sql, sysId).Scan(&list).Error
+		if err != nil {
+			return nil, 0, err
+		}
+		return list, int64(len(list)), err
+	}
 
 	limit := reqInfo.PageSize
 	offset := reqInfo.PageSize * (reqInfo.Page - 1)
@@ -191,7 +198,16 @@ func (m *MyApiService) GetCollegesResp(sysId uint) (colleges []response.CollegeL
 }
 
 // 获取学生就业信息列表
-func (m *MyApiService) GetEmployedListResp(reqInfo r.SearchStu, sysId uint) (list []response.EmployedInfos, total int64, err error) {
+func (m *MyApiService) GetEmployedListResp(reqInfo r.SearchStu, sysId uint, AuthorityId uint) (list []response.EmployedInfos, total int64, err error) {
+
+	if AuthorityId == 2019 {
+		sql := "select s.id ID, s.stu_number StuNumber , s.stu_name StuName, case when s.employed = 'Y' then '是' else '否' end as IsEmployed, sj.company_name CompanyName, sj.job_city JobCity, sj.job_title JobTitle, sj.job_salary JobSalary from students s left join student_jobs sj on sj.stu_number = s.stu_number where s.sys_stu_id = ? and s.deleted_at is null order by s.id "
+		err = global.GVA_DB.Raw(sql, sysId).Scan(&list).Error
+		if err != nil {
+			return nil, 0, err
+		}
+		return list, int64(len(list)), err
+	}
 
 	limit := reqInfo.PageSize
 	offset := reqInfo.PageSize * (reqInfo.Page - 1)
@@ -418,6 +434,56 @@ func (m *MyApiService) SetJobFairResp(reqInfo r.AddJobFair, sysId uint) (err err
 	return nil
 }
 
+func (m *MyApiService) AddCommentInfoResp(reqInfo r.AddComment, sysId uint, AuthorityId uint) (err error) {
+
+	var stuComment, teaCommnet string
+	if AuthorityId == 2019 {
+		stuComment = reqInfo.Comment
+	}
+	if AuthorityId == 10001 {
+		teaCommnet = reqInfo.Comment
+	}
+	ID, _ := strconv.Atoi(reqInfo.ID)
+	err = global.GVA_DB.Create(&myPkg.Comments{
+		GVA_MODEL:       global.GVA_MODEL{},
+		JobFairsId:      int64(ID),
+		CompanyName:     reqInfo.CompanyName,
+		StuComments:     stuComment,
+		TeacherComments: teaCommnet,
+	}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 评价列表
+func (m *MyApiService) GetCommentListResp(reqInfo r.SearchComment, sysId uint, AuthorityId uint) (list []response.CommentList, total int64, err error) {
+	limit := reqInfo.PageSize
+	offset := reqInfo.PageSize * (reqInfo.Page - 1)
+
+	strWhere := ""
+	if len(reqInfo.CompanyName) != 0 {
+		strWhere = fmt.Sprintf("c.company_name = '%s' and", reqInfo.CompanyName)
+	}
+
+	totalSQL := " select count(*) from comments c  where " + strWhere + " c.deleted_at is null"
+	err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+	SQL := "select c.id ID, c.company_name CompanyName, c.stu_comments StudentComment, c.teacher_comments TeacherComment, date_format(c.created_at , \"%Y-%m-%d %H:%i:%s\") CreatedAt from comments c where " + strWhere + " c.deleted_at is null order by c.created_at desc limit ?, ?"
+	err = global.GVA_DB.Raw(SQL, offset, limit).Scan(&list).Error
+	if err != nil {
+		return list, total, err
+	}
+	return list, total, nil
+
+}
+
 //获取公告列表
 func (m *MyApiService) GetContentListResp(reqInfo r.SearchContent, sysId uint) (list []response.ContentList, total int64, err error) {
 	limit := reqInfo.PageSize
@@ -496,50 +562,19 @@ func (m *MyApiService) DelContentResp(reqInfo r.DelContent, sysId uint) error {
 	return nil
 }
 
-/*-----------------------------------------------------------------------*/
-
-// 根据条件获取毕业生信息列表
-//func (m *MyApiService) GetStudentsListByConditionsResp(reqInfo r.SearchStu, sysId uint) (list []response.StudentsList, total int64, err error) {
-//
-//	limit := reqInfo.PageInfo.PageSize
-//	offset := reqInfo.PageInfo.PageSize * (reqInfo.PageInfo.Page - 1)
-//	whereStr := ""
-//	if reqInfo.ClassNumber != "" {
-//		whereStr = fmt.Sprintf("'%v' ssi.stu_class_num = '%v' and ", whereStr, reqInfo.ClassNumber)
-//	} else if reqInfo.StuNumber != "" {
-//		whereStr = fmt.Sprintf("'%v' ssi.stu_num = '%v' and ", whereStr, reqInfo.StuNumber)
-//	}
-//
-//	totalSQL := " select count(*) from sys_stu_infos ssi inner join sys_users su on su.id = ssi.sys_user_id inner join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where " + whereStr + " ssi.deleted_at is null  order by ssi.stu_num"
-//	if err = global.GVA_DB.Raw(totalSQL).Error; err != nil {
-//		return list, total, err
-//	}
-//	if total == 0 {
-//		return list, total, nil
-//	}
-//	sql := "select ssi.stu_num StudentNum, ssi.stu_name StudentName, scci.college_num CollegeNum, scci.college_name CollegeName, ssi.stu_class_num StudentClassNum, su.phone Phone, su.email Email, ssi.employed Employed from sys_stu_infos ssi inner join sys_users su on su.id = ssi.sys_user_id inner join sys_class_college_infos scci on scci.class_num = ssi.stu_class_num where " + whereStr + " ssi.deleted_at is null  order by ssi.stu_num limit ?,?"
-//	err = global.GVA_DB.Raw(sql, limit, offset).Scan(&limit).Error
-//	if err != nil {
-//		return list, total, err
-//	}
-//	fmt.Println("hello World")
-//	return list, total, nil
-//}
-
-// 删除毕业生信息
-func (m *MyApiService) DeleteStudentsInfosResp() {
-	fmt.Println("hello World")
-}
-
 // 获取各学院的就业情况列表
-func (m *MyApiService) GetEmploymentInfosResp(reqInfo request.PageInfo, sysId uint) (list []response.StuEmploymentInfos, total int64, err error) {
+func (m *MyApiService) GetEmploymentInfosResp(reqInfo r.SearchCollegeDetails, sysId uint) (list []response.StuEmploymentInfos, total int64, err error) {
+
+	strWhere := ""
+	if len(reqInfo.CollegeNumber) != 0 {
+		strWhere = fmt.Sprintf("where s.college_number = '%s'", reqInfo.CollegeNumber)
+	}
 
 	//TODO: 校验身份权限
-
 	limit := reqInfo.PageSize
 	offset := reqInfo.PageSize * (reqInfo.Page - 1)
 
-	totalSQL := "select count(*) from  (select distinct s.college_number  from students s ) t "
+	totalSQL := "select count(*) from  (select distinct s.college_number  from students s " + strWhere + "  ) t "
 	err = global.GVA_DB.Raw(totalSQL).Scan(&total).Error
 	if err != nil {
 		return list, 0, err
@@ -548,7 +583,7 @@ func (m *MyApiService) GetEmploymentInfosResp(reqInfo request.PageInfo, sysId ui
 		return list, 0, nil
 	}
 
-	sql := "select s.college_number CollegeNum,c.college_name CollegeName , count(*) TotalStudents from students s left join colleges c on c.college_number = s.college_number  group by s.college_number,c.college_name  limit ?,?"
+	sql := "select s.college_number CollegeNumber,c.college_name CollegeName , count(*) TotalStudents from students s left join colleges c on c.college_number = s.college_number " + strWhere + " group by s.college_number,c.college_name  limit ?,?"
 	err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error
 	if err != nil {
 		return list, total, err
@@ -556,17 +591,45 @@ func (m *MyApiService) GetEmploymentInfosResp(reqInfo request.PageInfo, sysId ui
 	tmp1 := response.StuEmploymentInfos{}
 	tmp2 := response.StuEmploymentInfos{}
 	for i := 0; i < len(list); i++ {
-		sql1 := "select s.college_number CollegeNum, count(*) EmployedSum from students s where s.employed = 'Y' and s.college_number = ?  group by s.college_number "
-		err = global.GVA_DB.Raw(sql1, list[i].CollegeNum).Scan(&tmp1).Error
+		sql1 := "select s.college_number CollegeNumber, count(*) EmployedSum from students s where s.employed = 'Y' and s.college_number = ?  group by s.college_number "
+		err = global.GVA_DB.Raw(sql1, list[i].CollegeNumber).Scan(&tmp1).Error
 		list[i].EmployedSum = tmp1.EmployedSum
-		sql2 := "select s.college_number CollegeNum, count(*) UnemployedSum from students s where s.employed = 'N' and s.college_number = ?  group by s.college_number "
-		err = global.GVA_DB.Raw(sql2, list[i].CollegeNum).Scan(&tmp2).Error
+		sql2 := "select s.college_number CollegeNumber, count(*) UnemployedSum from students s where s.employed = 'N' and s.college_number = ?  group by s.college_number "
+		err = global.GVA_DB.Raw(sql2, list[i].CollegeNumber).Scan(&tmp2).Error
 		list[i].UnemployedSum = tmp2.UnemployedSum
 		list[i].Percentage = strconv.FormatInt((list[i].EmployedSum*100)/(list[i].TotalStudents), 10) + "%"
 	}
 	return list, total, nil
 }
 
+//获取班级就业信息详情
+func (m *MyApiService) GetCollegeEmployedListResp(reqInfo r.SearchCollegeDetails, sysId uint) (list []response.ClassDetails, total int64, err error) {
+	limit := reqInfo.PageSize
+	offset := reqInfo.PageSize * (reqInfo.Page - 1)
+
+	totalSQL := " select count(*) from students s left join student_jobs sj on sj.stu_number = s.stu_number where s.college_number = ? and s.deleted_at is null"
+	err = global.GVA_DB.Raw(totalSQL, reqInfo.CollegeNumber).Scan(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+	if total == 0 {
+		return list, total, nil
+	}
+	sql := " select s.stu_number StuNumber, s.stu_name StuName , s.class_number ClassNumber, s.employed Employed, sj.company_name CompanyName from students s left join student_jobs sj on sj.stu_number = s.stu_number where s.college_number = ? and s.deleted_at is null limit ?,? "
+	err = global.GVA_DB.Raw(sql, reqInfo.CollegeNumber, offset, limit).Scan(&list).Error
+	if err != nil {
+		return list, total, err
+	}
+	return list, total, nil
+}
+
+/*-----------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------*/
+
+// 删除毕业生信息
+func (m *MyApiService) DeleteStudentsInfosResp() {
+	fmt.Println("hello World")
+}
 func (m *MyApiService) GetEmploymentInfosListByConditionsResp() {
 	fmt.Println("hello World")
 }
