@@ -1,12 +1,16 @@
 <template>
   <div>
     <div class="gva-search-box">
-      <el-form ref="searchForm" :inline="true" :model="searchInfo" >
-        <el-form-item label="学院编号">
-          <el-input  placeholder="学院编号" />
-        </el-form-item>
-        <el-form-item label="学院名称">
-          <el-input  placeholder="学院名称" />
+      <el-form ref="searchForm" :inline="true" :model="searchInfo">
+        <el-form-item label="所属学院">
+          <el-select v-model="searchInfo.collegeNumber" clearable placeholder="请选择">
+            <el-option
+                v-for="item in methodOptions"
+                :key="item.collegeNumber"
+                :label="item.collegeName"
+                :value="item.collegeNumber"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item>
           <el-button size="small" type="primary" icon="search" @click="onSubmit">查询</el-button>
@@ -14,108 +18,84 @@
         </el-form-item>
       </el-form>
     </div>
-    <!--    <warning-bar title="注：右上角头像下拉可切换角色" />-->
     <div class="gva-table-box">
       <el-table
-        :data="tableData"
-        row-key="ID"
+          :data="tableData"
+          row-key="ID"
       >
 <!--        <el-table-column align="left" label="ID" min-width="50" prop="ID" />-->
-        <el-table-column align="left" label="学院编号" min-width="100" prop="collegeNum" />
+        <el-table-column align="left" label="学院编号" min-width="100" prop="collegeNumber" />
         <el-table-column align="left" label="学院名称" min-width="100" prop="collegeName" />
-        <el-table-column align="left" label="总人数" min-width="100" prop="totalStudents" />
-        <el-table-column align="left" label="签约人数" min-width="150" prop="employedSum" filtered-value="1" />
-        <el-table-column align="left" label="未签约人数" min-width="150" prop="unemployedSum" filtered-value="1" />
+        <el-table-column align="left" label="总人数" min-width="180" prop="totalStudents" />
+        <el-table-column align="left" label="签约人数" min-width="180" prop="employedSum" />
+        <el-table-column align="left" label="未签约人数" min-width="180" prop="unemployedSum" />
         <el-table-column align="left" label="签约百分比" min-width="180" prop="percentage" />
         <el-table-column label="操作" min-width="250" fixed="right">
           <template #default="scope">
-            <el-button type="primary" link icon="delete" size="small">删除</el-button>
-            <el-button type="primary" link icon="edit" size="small">编辑</el-button>
-            <el-button type="primary" link icon="magic-stick" size="small">详情</el-button>
+            <el-button type="primary" link icon="magic-stick" size="small" @click="openDetails(scope.row)">详情</el-button>
+            <!--            <el-button type="primary" link icon="edit" size="small" @click="openEdit(scope.row)">编辑</el-button>-->
           </template>
         </el-table-column>
 
       </el-table>
       <div class="gva-pagination">
         <el-pagination
-          :current-page="page"
-          :page-size="pageSize"
-          :page-sizes="[10, 30, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @current-change="handleCurrentChange"
-          @size-change="handleSizeChange"
+            :current-page="page"
+            :page-size="pageSize"
+            :page-sizes="[10, 30, 50, 100]"
+            :total="total"
+            layout="total, sizes, prev, pager, next, jumper"
+            @current-change="handleCurrentChange"
+            @size-change="handleSizeChange"
         />
       </div>
     </div>
+    <!--  详情   -->
     <el-dialog
-      v-model="addUserDialog"
-      custom-class="user-dialog"
-      title="用户"
-      :show-close="false"
-      :close-on-press-escape="false"
-      :close-on-click-modal="false"
+        v-model="classDetailsDialog"
+        custom-class="user-dialog"
+        :show-close="false"
+        :close-on-press-escape="false"
+        :close-on-click-modal="false"
     >
-      <div style="height:60vh;overflow:auto;padding:0 12px;">
-        <el-form ref="userForm" :rules="rules" :model="userInfo" label-width="80px">
-          <el-form-item v-if="dialogFlag === 'add'" label="用户名" prop="userName">
-            <el-input v-model="userInfo.userName" />
-          </el-form-item>
-          <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password">
-            <el-input v-model="userInfo.password" />
-          </el-form-item>
-          <el-form-item label="昵称" prop="nickName">
-            <el-input v-model="userInfo.nickName" />
-          </el-form-item>
-          <el-form-item label="手机号" prop="phone">
-            <el-input v-model="userInfo.phone" />
-          </el-form-item>
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="userInfo.email" />
-          </el-form-item>
-          <el-form-item label="用户角色" prop="authorityId">
-            <el-cascader
-              v-model="userInfo.authorityIds"
-              style="width:100%"
-              :options="authOptions"
-              :show-all-levels="false"
-              :props="{ multiple:true,checkStrictly: true,label:'authorityName',value:'authorityId',disabled:'disabled',emitPath:false}"
-              :clearable="false"
-            />
-          </el-form-item>
-          <el-form-item label="启用" prop="disabled">
-            <el-switch
-              v-model="userInfo.enable"
-              inline-prompt
-              :active-value="1"
-              :inactive-value="2"
-            />
-          </el-form-item>
-          <el-form-item label="头像" label-width="80px">
-            <div style="display:inline-block" @click="openHeaderChange">
-              <img v-if="userInfo.headerImg" alt="头像" class="header-img-box" :src="(userInfo.headerImg && userInfo.headerImg.slice(0, 4) !== 'http')?path+userInfo.headerImg:userInfo.headerImg">
-              <div v-else class="header-img-box">从媒体库选择</div>
-            </div>
-          </el-form-item>
-
-        </el-form>
-
+      <div class="gva-table-box">
+        <el-table
+            :data="classDetailsData"
+            row-key="ID"
+        >
+<!--          <el-table-column align="left" label="ID" min-width="50" prop="ID" />-->
+          <el-table-column align="left" label="学号" min-width="100" prop="stuNumber" />
+          <el-table-column align="left" label="姓名" min-width="100" prop="stuName" />
+          <el-table-column align="left" label="班级" min-width="180" prop="classNumber" />
+          <el-table-column align="left" label="是否签约" min-width="180" prop="employed" />
+          <el-table-column align="left" label="公司名称" min-width="180" prop="companyName" />
+        </el-table>
+        <div class="gva-pagination">
+          <el-pagination
+              :current-page="page"
+              :page-size="pageSize"
+              :page-sizes="[10, 30, 50, 100]"
+              :total="total"
+              layout="total, sizes, prev, pager, next, jumper"
+              @current-change="handleCurrentChange"
+              @size-change="handleSizeChange"
+          />
+        </div>
       </div>
-
       <template #footer>
         <div class="dialog-footer">
-          <el-button size="small" @click="closeAddUserDialog">取 消</el-button>
-          <el-button size="small" type="primary" @click="enterAddUserDialog">确 定</el-button>
+          <el-button size="small" type="primary" @click="closeClassDetailDialog">确 定</el-button>
         </div>
       </template>
     </el-dialog>
+    <!--    -->
     <ChooseImg ref="chooseImg" :target="userInfo" :target-key="`headerImg`" />
   </div>
 </template>
 
 <script>
 export default {
-  name: 'GraduateInfos',
+  name: 'ClassPage',
 }
 </script>
 
@@ -131,12 +111,12 @@ import {
 import { getAuthorityList } from '@/api/authority'
 import CustomPic from '@/components/customPic/index.vue'
 import ChooseImg from '@/components/chooseImg/index.vue'
-import WarningBar from '@/components/warningBar/warningBar.vue'
 import { setUserInfo, resetPassword } from '@/api/user.js'
 
 import { nextTick, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getEmploymentInfos } from '@/api/student'
+import { getCollegeEmployedDetails, getColleges, getEmployedDetails, getEmploymentInfos } from '@/api/student'
+import { getClassEmployedDetails, getClassList } from '@/api/class'
 const path = ref(import.meta.env.VITE_BASE_API + '/')
 // 初始化相关
 const setAuthorityOptions = (AuthorityData, optionsData) => {
@@ -164,6 +144,35 @@ const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
+const searchInfo = ref({
+  collegeNumber: '',
+})
+
+const methodOptions = ref([{
+  collegeNumber: '',
+  collegeName: '',
+}])
+
+const getCollegeData = async() => {
+  const res = await getColleges({})
+  if (res.code === 0) {
+    methodOptions.value = res.data
+  }
+  console.log(res.data)
+}
+getCollegeData()
+
+const onReset = () => {
+  searchInfo.value = {}
+}
+// 搜索
+
+const onSubmit = () => {
+  page.value = 1
+  pageSize.value = 10
+  getTableData()
+}
+
 // 分页
 const handleSizeChange = (val) => {
   pageSize.value = val
@@ -177,7 +186,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getEmploymentInfos({ page: page.value, pageSize: pageSize.value })
+  const table = await getEmploymentInfos({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -198,32 +207,6 @@ const initPage = async() => {
 
 initPage()
 
-const resetPasswordFunc = (row) => {
-  ElMessageBox.confirm(
-    '是否将此用户密码重置为123456?',
-    '警告',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    }
-  ).then(async() => {
-    const res = await resetPassword({
-      ID: row.ID,
-    })
-    if (res.code === 0) {
-      ElMessage({
-        type: 'success',
-        message: res.msg,
-      })
-    } else {
-      ElMessage({
-        type: 'error',
-        message: res.msg,
-      })
-    }
-  })
-}
 const setAuthorityIds = () => {
   tableData.value && tableData.value.forEach((user) => {
     user.authorityIds = user.authorities && user.authorities.map(i => {
@@ -241,15 +224,6 @@ const authOptions = ref([])
 const setOptions = (authData) => {
   authOptions.value = []
   setAuthorityOptions(authData, authOptions.value)
-}
-
-const deleteUserFunc = async(row) => {
-  const res = await deleteUser({ id: row.ID })
-  if (res.code === 0) {
-    ElMessage.success('删除成功')
-    row.visible = false
-    await getTableData()
-  }
 }
 
 // 弹窗相关
@@ -287,19 +261,19 @@ const rules = ref({
 })
 const userForm = ref(null)
 const enterAddUserDialog = async() => {
-  userInfo.value.authorityId = userInfo.value.authorityIds[0]
+  // userInfo.value.authorityId = userInfo.value.authorityIds[0]
   userForm.value.validate(async valid => {
     if (valid) {
       const req = {
         ...userInfo.value
       }
-      if (dialogFlag.value === 'add') {
-        const res = await register(req)
-        if (res.code === 0) {
-          ElMessage({ type: 'success', message: '创建成功' })
-          await getTableData()
-          closeAddUserDialog()
-        }
+      if (dialogFlag.value === 'detail') {
+        // const res = await register(req)
+        // if (res.code === 0) {
+        //   ElMessage({ type: 'success', message: '创建成功' })
+        //   await getTableData()
+        //   closeAddUserDialog()
+        // }
       }
       if (dialogFlag.value === 'edit') {
         const res = await setUserInfo(req)
@@ -313,65 +287,36 @@ const enterAddUserDialog = async() => {
   })
 }
 
-const addUserDialog = ref(false)
+const classDialog = ref(false)
 const closeAddUserDialog = () => {
   userForm.value.resetFields()
   userInfo.value.headerImg = ''
   userInfo.value.authorityIds = []
-  addUserDialog.value = false
+  classDialog.value = false
 }
 
-const dialogFlag = ref('add')
-
-const addUser = () => {
-  dialogFlag.value = 'add'
-  addUserDialog.value = true
+const classDetailsDialog = ref(false)
+const closeClassDetailDialog = () => {
+  classDetailsDialog.value = false
 }
 
-const tempAuth = {}
-const changeAuthority = async(row, flag, removeAuth) => {
-  if (flag) {
-    if (!removeAuth) {
-      tempAuth[row.ID] = [...row.authorityIds]
-    }
-    return
-  }
-  await nextTick()
-  const res = await setUserAuthorities({
-    ID: row.ID,
-    authorityIds: row.authorityIds
-  })
-  if (res.code === 0) {
-    ElMessage({ type: 'success', message: '角色设置成功' })
-  } else {
-    if (!removeAuth) {
-      row.authorityIds = [...tempAuth[row.ID]]
-      delete tempAuth[row.ID]
-    } else {
-      row.authorityIds = [removeAuth, ...row.authorityIds]
-    }
-  }
-}
+const dialogFlag = ref()
 
+const classDetailsData = ref([])
+const openDetails = async(row) => {
+  dialogFlag.value = 'details'
+  const res = await getCollegeEmployedDetails({ page: page.value, pageSize: pageSize.value, collegeNumber: row.collegeNumber })
+  classDetailsData.value = res.data.list
+  total.value = res.data.total
+  page.value = res.data.page
+  pageSize.value = res.data.pageSize
+  // classDetailsData.value = res.data
+  classDetailsDialog.value = true
+}
 const openEdit = (row) => {
   dialogFlag.value = 'edit'
   userInfo.value = JSON.parse(JSON.stringify(row))
-  addUserDialog.value = true
-}
-
-const switchEnable = async(row) => {
-  userInfo.value = JSON.parse(JSON.stringify(row))
-  await nextTick()
-  const req = {
-    ...userInfo.value
-  }
-  const res = await setUserInfo(req)
-  if (res.code === 0) {
-    ElMessage({ type: 'success', message: `${req.enable === 2 ? '禁用' : '启用'}成功` })
-    await getTableData()
-    userInfo.value.headerImg = ''
-    userInfo.value.authorityIds = []
-  }
+  classDialog.value = true
 }
 
 </script>
@@ -417,3 +362,4 @@ const switchEnable = async(row) => {
   margin-left: 2px;
 }
 </style>
+

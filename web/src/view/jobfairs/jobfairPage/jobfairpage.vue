@@ -18,6 +18,7 @@
         <el-table-column align="left" label="招聘会地址" min-width="180" prop="address" />
         <el-table-column label="操作" min-width="250" fixed="right">
           <template #default="scope">
+            <el-button type="primary" link icon="edit" size="small" @click="openEstimate(scope.row)">评价</el-button>
             <el-button type="primary" link icon="edit" size="small" @click="openEdit(scope.row)">编辑</el-button>
             <el-popover v-model="scope.row.visible" placement="top" width="160">
               <p>确定要删除吗</p>
@@ -87,6 +88,31 @@
         </div>
       </template>
     </el-dialog>
+<!--    -->
+    <el-dialog
+        v-model="addCommentDialog"
+        custom-class="user-dialog"
+        title="评价"
+        :show-close="false"
+        :close-on-press-escape="false"
+        :close-on-click-modal="false"
+    >
+      <div style="height:auto;overflow:auto;padding:0 12px;">
+        <el-form ref="userForm" :model="commentInfo" label-width="80px">
+          <el-form-item label="评价" prop="content">
+            <el-input v-model="commentInfo.comment" type="textarea" :rows="4" />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button size="small" @click="closeAddCommentDialog">取 消</el-button>
+          <el-button size="small" type="primary" @click="enterAddUserDialog">确 定</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!--    -->
   </div>
 </template>
 
@@ -100,7 +126,7 @@ export default {
 
 import { nextTick, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { addJobFair, deleteJobFair, getJobFairList, setJobFair } from '@/api/jobFairs'
+import { addCommentInfo, addJobFair, deleteJobFair, getJobFairList, setJobFair } from '@/api/jobFairs'
 const path = ref(import.meta.env.VITE_BASE_API + '/')
 // 初始化相关
 const setAuthorityOptions = (AuthorityData, optionsData) => {
@@ -248,6 +274,17 @@ const enterAddUserDialog = async() => {
           closeAddUserDialog()
         }
       }
+      const reqC = {
+        ...commentInfo.value
+      }
+      if (dialogFlag.value === 'estimate') {
+        const res = await addCommentInfo(reqC)
+        if (res.code === 0) {
+          ElMessage({ type: 'success', message: '编辑成功' })
+          await getTableData()
+          closeAddCommentDialog()
+        }
+      }
     }
   })
 }
@@ -270,6 +307,21 @@ const openEdit = (row) => {
   dialogFlag.value = 'edit'
   userInfo.value = JSON.parse(JSON.stringify(row))
   addUserDialog.value = true
+}
+const commentInfo = ref({
+  ID: '',
+  companyName: '',
+  comment: '',
+})
+const addCommentDialog = ref(false)
+const closeAddCommentDialog = () => {
+  userForm.value.resetFields
+  addCommentDialog.value = false
+}
+const openEstimate = (row) => {
+  dialogFlag.value = 'estimate'
+  commentInfo.value = JSON.parse(JSON.stringify(row))
+  addCommentDialog.value = true
 }
 
 </script>

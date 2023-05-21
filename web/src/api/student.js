@@ -64,3 +64,10 @@ export const getEmploymentInfos = (data) => {
     data: data
   })
 }
+export const getCollegeEmployedDetails = (data) => {
+  return service({
+    url: '/myapp/v1/infos/getCollegeEmployedDetails',
+    method: 'post',
+    data: data
+  })
+}

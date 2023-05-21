@@ -14,7 +14,7 @@
         <el-table-column align="left" label="发布时间" min-width="100" prop="updateTime" />
         <el-table-column label="操作" min-width="250" fixed="right">
           <template #default="scope">
-            <el-button type="primary" link icon="magic-stick" size="small" @click="openDetails(scope.row)">详情</el-button>
+<!--            <el-button type="primary" link icon="magic-stick" size="small" @click="openDetails(scope.row)">详情</el-button>-->
             <el-button type="primary" link icon="edit" size="small" @click="openEdit(scope.row)">编辑</el-button>
             <el-popover v-model="scope.row.visible" placement="top" width="160">
               <p>确定要删除吗</p>
@@ -202,29 +202,6 @@ const userInfo = ref({
   author: '',
   updateTime: '',
 })
-//
-// const rules = ref({
-//   userName: [
-//     { required: true, message: '请输入用户名', trigger: 'blur' },
-//     { min: 5, message: '最低5位字符', trigger: 'blur' }
-//   ],
-//   password: [
-//     { required: true, message: '请输入用户密码', trigger: 'blur' },
-//     { min: 6, message: '最低6位字符', trigger: 'blur' }
-//   ],
-//   nickName: [
-//     { required: true, message: '请输入用户昵称', trigger: 'blur' }
-//   ],
-//   phone: [
-//     { pattern: /^1([38][0-9]|4[014-9]|[59][0-35-9]|6[2567]|7[0-8])\d{8}$/, message: '请输入合法手机号', trigger: 'blur' },
-//   ],
-//   email: [
-//     { pattern: /^([0-9A-Za-z\-_.]+)@([0-9a-z]+\.[a-z]{2,3}(\.[a-z]{2})?)$/g, message: '请输入正确的邮箱', trigger: 'blur' },
-//   ],
-//   authorityId: [
-//     { required: true, message: '请选择用户角色', trigger: 'blur' }
-//   ]
-// })
 const userForm = ref(null)
 const enterAddUserDialog = async() => {
   userForm.value.validate(async valid => {
@@ -269,7 +246,7 @@ const addContent = () => {
 
 const openDetails = async(row) => {
   dialogFlag.value = 'details'
-  const res = await getContentDetails({ stuNumber: row.stuNumber })
+  const res = await getContentDetails({ Id: row.ID })
   // employedDetails.value = res.data
   // studentDetailDialog.value = true
 }

@@ -28,3 +28,17 @@ export const setJobFair = (data) => {
     data: data
   })
 }
+export const addCommentInfo = (data) => {
+  return service({
+    url: '/myapp/v1/jobFairs/upd/addCommentInfo',
+    method: 'post',
+    data: data
+  })
+}
+export const getCommentList = (data) => {
+  return service({
+    url: '/myapp/v1/jobFairs/get/getCommentList',
+    method: 'post',
+    data: data
+  })
+}
