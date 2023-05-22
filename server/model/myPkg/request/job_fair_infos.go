@@ -42,3 +42,7 @@ type SearchComment struct {
 	request.PageInfo
 	CompanyName string `json:"companyName"`
 }
+type AddSummary struct {
+	ID      string `json:"Id"`
+	Summary string `json:"summary"`
+}

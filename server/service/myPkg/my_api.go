@@ -21,7 +21,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo r.SearchStu, sysId uint, Auth
 
 	// TODO:身份权限校验
 	if AuthorityId == 2019 {
-		sql := " select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.sys_stu_id = ? and s.deleted_at is null"
+		sql := " select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email ,s.summary Summary from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where s.sys_stu_id = ? and s.deleted_at is null"
 		err = global.GVA_DB.Raw(sql, sysId).Scan(&list).Error
 		if err != nil {
 			return nil, 0, err
@@ -51,7 +51,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo r.SearchStu, sysId uint, Auth
 		return list, total, nil
 	}
 
-	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where " + whereStr + " s.deleted_at is null limit ? ,?"
+	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , c2.college_name CollegeName, su.phone Phone, su.email Email ,s.summary Summary from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number left join colleges c2 on c.college_number = c2.college_number where " + whereStr + " s.deleted_at is null limit ? ,?"
 	if err = global.GVA_DB.Raw(sql, offset, limit).Scan(&list).Error; err != nil {
 		return list, total, err
 	}
@@ -61,7 +61,7 @@ func (m *MyApiService) GetStudentsListResp(reqInfo r.SearchStu, sysId uint, Auth
 // 查看毕业生就业详情
 func (m *MyApiService) GetStudentsDetailsResp(reqInfo r.GetStudentsDetails, sysId uint) (info response.StudentDetails, err error) {
 
-	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , s.start_time StarTime, s.end_time EndTime, c2.college_name CollegeName, su.phone Phone, su.email Email from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number and c.deleted_at is null left join colleges c2 on c.college_number = c2.college_number and c2.deleted_at is null where s.stu_number = ? and s.deleted_at is null"
+	sql := "select s.id ID, s.stu_number StuNumber, s.stu_name StuName, s.stu_sex StuSex, s.class_number ClassNumber , s.grade_number GradeNumber , s.start_time StarTime, s.end_time EndTime, c2.college_name CollegeName, su.phone Phone, su.email Email ,s.summary Summary from students s inner join sys_users su on s.sys_stu_id = su.id and su.deleted_at is null left join classes c on c.class_number = s.class_number and c.deleted_at is null left join colleges c2 on c.college_number = c2.college_number and c2.deleted_at is null where s.stu_number = ? and s.deleted_at is null"
 	err = global.GVA_DB.Raw(sql, reqInfo.StuNumber).Scan(&info).Error
 	if err != nil {
 		return info, err
@@ -621,6 +621,17 @@ func (m *MyApiService) GetCollegeEmployedListResp(reqInfo r.SearchCollegeDetails
 		return list, total, err
 	}
 	return list, total, nil
+}
+func (m *MyApiService) AddSummaryResp(reqInfo r.AddSummary, sysId uint, AuthorityId uint) (err error) {
+
+	if AuthorityId != 2019 {
+		return errors.New("您没有此权限")
+	}
+	err = global.GVA_DB.Where("id = ?", reqInfo.ID).Update("summary", reqInfo.Summary).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 /*-----------------------------------------------------------------------*/

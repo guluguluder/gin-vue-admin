@@ -17,6 +17,7 @@ type Students struct {
 	StartTime     string `json:"start_time" gorm:"start_time" db:"start_time"`             // 入学日期
 	EndTime       string `json:"end_time" gorm:"end_time" db:"end_time"`                   // 毕业日期
 	Employed      string `json:"employed" gorm:"employed" db:"employed"`                   // 是否签约 （y:已签约，n:未签约）
+	Summary       string `json:"summary" gorm:"summary" db:"summary"`                      // 就业总结
 }
 
 // TableName 表名称

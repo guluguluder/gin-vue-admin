@@ -465,6 +465,23 @@ func (m *MyApi) GetCollegeEmployedList(c *gin.Context) {
 		}, "ok", c)
 	}
 }
+func (m *MyApi) AddSummary(c *gin.Context) {
+	var reqInfo r.AddSummary
+	err := c.ShouldBindJSON(&reqInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	Id := utils.GetUserID(c)
+	AuthorityId := utils.GetUserAuthorityId(c)
+	err = myApiService.AddSummaryResp(reqInfo, Id, AuthorityId)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	} else {
+		response.OkWithMessage("操作成功", c)
+	}
+}
 
 /*-----------------------------------------------------------------------*/
 

@@ -40,6 +40,8 @@ func (m *MyApiRouter) InitMyApiRouter(Router *gin.RouterGroup) {
 		MyRouterGroup.DELETE("v1/content/del/deleteContent", myApi.DeleteContent)              // 添加公告信息
 		MyRouterGroup.POST("v1/infos/getEmploymentInfos", myApi.GetEmploymentInfos)            // 获取各学院的就业情况列表
 		MyRouterGroup.POST("v1/infos/getCollegeEmployedDetails", myApi.GetCollegeEmployedList) // 获取各学院的就业情况详情列表
+		// 就业总结
+		MyRouterGroup.POST("v1/infos/addSummary", myApi.AddSummary) // 获取各学院的就业情况详情列表
 
 		/*-----------------------------------------------------------------------------------------*/
 		//MyRouterGroup.POST("v1/students/list/getByConditions", myApi.GetStudentsListByConditions) // 根据条件获取毕业生信息列表

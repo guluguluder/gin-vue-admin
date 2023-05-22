@@ -10,8 +10,9 @@ type StudentsList struct {
 	CollegeName string `json:"collegeName"`
 	//StarTime    string `json:"startTime"`
 	//EndTime     string `json:"endTime"`
-	Phone string `json:"phone"`
-	Email string `json:"email"`
+	Phone   string `json:"phone"`
+	Email   string `json:"email"`
+	Summary string `json:"summary"`
 }
 
 type StudentDetails struct {
@@ -26,6 +27,7 @@ type StudentDetails struct {
 	EndTime     string `json:"endTime"`
 	Phone       string `json:"phone"`
 	Email       string `json:"email"`
+	Summary     string `json:"summary"`
 }
 
 type CollegeList struct {
