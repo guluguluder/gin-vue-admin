@@ -71,3 +71,10 @@ export const getCollegeEmployedDetails = (data) => {
     data: data
   })
 }
+export const addSummary = (data) => {
+  return service({
+    url: '/myapp/v1/infos/addSummary',
+    method: 'post',
+    data: data
+  })
+}
