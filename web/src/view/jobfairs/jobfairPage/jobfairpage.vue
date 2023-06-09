@@ -50,7 +50,7 @@
     <el-dialog
       v-model="addUserDialog"
       custom-class="user-dialog"
-      title="用户"
+      title="招聘信息"
       :show-close="false"
       :close-on-press-escape="false"
       :close-on-click-modal="false"

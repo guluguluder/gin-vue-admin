@@ -627,7 +627,7 @@ func (m *MyApiService) AddSummaryResp(reqInfo r.AddSummary, sysId uint, Authorit
 	if AuthorityId != 2019 {
 		return errors.New("您没有此权限")
 	}
-	err = global.GVA_DB.Where("id = ?", reqInfo.ID).Update("summary", reqInfo.Summary).Error
+	err = global.GVA_DB.Model(&myPkg.Students{}).Where("id = ?", reqInfo.ID).Update("summary", reqInfo.Summary).Error
 	if err != nil {
 		return err
 	}
@@ -636,26 +636,3 @@ func (m *MyApiService) AddSummaryResp(reqInfo r.AddSummary, sysId uint, Authorit
 
 /*-----------------------------------------------------------------------*/
 /*-----------------------------------------------------------------------*/
-
-// 删除毕业生信息
-func (m *MyApiService) DeleteStudentsInfosResp() {
-	fmt.Println("hello World")
-}
-func (m *MyApiService) GetEmploymentInfosListByConditionsResp() {
-	fmt.Println("hello World")
-}
-func (m *MyApiService) GetEmploymentDetailsResp() {
-	fmt.Println("hello World")
-}
-func (m *MyApiService) UpdEmploymentInfosResp() {
-	fmt.Println("hello World")
-}
-func (m *MyApiService) DeleteEmploymentInfosResp() {
-	fmt.Println("hello World")
-}
-func (m *MyApiService) GetEmployedStudentInfosResp() {
-	fmt.Println("hello World")
-}
-func (m *MyApiService) GetUnemployedStudentInfosResp() {
-	fmt.Println("hello World")
-}
